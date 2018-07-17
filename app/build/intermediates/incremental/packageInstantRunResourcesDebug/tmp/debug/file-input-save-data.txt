@@ -1,7 +1,0 @@
-#Internal package file, do not edit.
-#Tue Jul 17 22:47:58 IDT 2018
-0.baseType=DIRECTORY
-0.base=/Users/oshrits/Downloads/ShoppyBuddy 2/app/build/intermediates/assets/debug
-0.path=tessdata/eng.traineddata
-0.set=ASSET
-count=1
