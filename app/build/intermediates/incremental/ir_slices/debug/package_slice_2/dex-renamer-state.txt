@@ -1,4 +1,4 @@
-#Tue Jul 17 21:42:04 IDT 2018
-base.0=C\:\\Users\\felix\\StudioProjects\\ShoppyBuddy2\\ShoppyBuddy\\app\\build\\intermediates\\transforms\\dexMerger\\debug\\3
+#Tue Jul 17 22:48:22 IDT 2018
+base.0=/Users/oshrits/Downloads/ShoppyBuddy 2/app/build/intermediates/transforms/dexMerger/debug/2
 path.0=classes.dex
 renamed.0=classes.dex
