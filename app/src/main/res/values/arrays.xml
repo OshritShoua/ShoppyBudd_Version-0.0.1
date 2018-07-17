@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="pref_currency_entries">
+        <item>$ - USD</item>
+        <item>€ - EUR</item>
+        <item>₪ - ILS</item>
+        <item>¥ - JPY</item>
+        <item>£ - GBP</item>
+    </string-array>
+    <string-array name="pref_currency_values">
+        <item>$ - USD</item>
+        <item>€ - EUR</item>
+        <item>₪ - ILS</item>
+        <item>¥ - JPY</item>
+        <item>£ - GBP</item>
+    </string-array>
+</resources>

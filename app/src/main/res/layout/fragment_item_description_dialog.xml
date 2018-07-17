@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+    android:id="@+id/edit_name"
+
+    android:layout_width="wrap_content" android:layout_height="wrap_content"
+
+    android:layout_gravity="center" android:orientation="vertical"  >
+
+
+    <TextView
+
+        android:id="@+id/item_description_msg"
+        android:layout_width="match_parent"
+
+        android:layout_height="101dp"
+        android:text="@string/item_describe_dialog_text"
+        android:textSize="18sp" />
+
+
+    <EditText
+
+        android:id="@+id/item_description_editing"
+
+        android:layout_width="278dp"
+        android:layout_height="wrap_content"
+
+        android:imeOptions="actionDone"
+
+        android:inputType="text" />
+
+</LinearLayout>
