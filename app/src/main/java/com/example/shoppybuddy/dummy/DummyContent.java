@@ -1,5 +1,6 @@
 package com.example.shoppybuddy.dummy;
 
+//OSHI POSHI ME ERETZ NOSHI !!!!!
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
