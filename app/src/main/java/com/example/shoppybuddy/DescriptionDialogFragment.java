@@ -46,22 +46,16 @@ public class DescriptionDialogFragment extends DialogFragment implements TextVie
 
     public static DescriptionDialogFragment newInstance(String title, DialogPurpose dialogPurpose) {
         _dialogPurpose = dialogPurpose;
-
         DescriptionDialogFragment frag = new DescriptionDialogFragment();
-
         Bundle args = new Bundle();
-
         args.putString("title", title);
-
         frag.setArguments(args);
-
         return frag;
 
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState)
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
     {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_item_description_dialog, container, false);
@@ -74,53 +68,39 @@ public class DescriptionDialogFragment extends DialogFragment implements TextVie
     }
 
     @Override
-
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-
         super.onViewCreated(view, savedInstanceState);
-
         // Get field from view
-
         mEditText = (EditText) view.findViewById(R.id.item_description_editing);
-
         // Fetch arguments from bundle and set title
-
         String title = getArguments().getString("title", "Enter Name");
-
         getDialog().setTitle(title);
-
         // Show soft keyboard automatically and request focus to field
-
         mEditText.requestFocus();
-
-        getDialog().getWindow().setSoftInputMode(
-
-                WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
-
+        getDialog().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
         mEditText.setOnEditorActionListener(this);
     }
 
     public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-
         if (EditorInfo.IME_ACTION_DONE == actionId) {
-
             // Return input text back to activity through the implemented listener
-
             DescriptionDialogListener listener = (DescriptionDialogListener) getActivity();
             if(_dialogPurpose == DialogPurpose.itemDescription)
+            {
                 listener.OnItemDescriptionDone(mEditText.getText().toString());
+            }
             else if(_dialogPurpose == DialogPurpose.cartDescription)
+            {
                 listener.OnCartDescriptionDone(mEditText.getText().toString());
-            // Close the dialog and return back to the parent activity
+            }
 
+            // Close the dialog and return back to the parent activity
             dismiss();
 
             return true;
-
         }
 
         return false;
-
     }
 
     @Override
@@ -133,5 +113,4 @@ public class DescriptionDialogFragment extends DialogFragment implements TextVie
             Log.d("ABSDIALOGFRAG", "Exception", e);
         }
     }
-
 }

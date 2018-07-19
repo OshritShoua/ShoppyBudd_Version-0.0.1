@@ -1,16 +1,9 @@
 package com.example.shoppybuddy;
 
 import android.Manifest;
-import com.google.android.gms.vision.Frame;
-import com.google.android.gms.vision.text.Text;
-import com.google.android.gms.vision.text.TextBlock;
-import com.google.android.gms.vision.text.TextRecognizer;
 import android.arch.persistence.room.Room;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -20,8 +13,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
-import android.util.SparseArray;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -30,24 +21,32 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.shoppybuddy.data.AppDataBase;
+import com.example.shoppybuddy.entities.Cart;
+import com.example.shoppybuddy.entities.Item;
+import com.example.shoppybuddy.services.OCRServices;
+import com.example.shoppybuddy.services.PricingServices;
+
 import java.io.File;
-import java.io.FileNotFoundException;
 
 public class CartReviewActivity extends AppCompatActivity implements RecaptureImageDialogFragment.RecaptureImageDialogListener, DescriptionDialogFragment.DescriptionDialogListener
 {
-    Cart _cart;
-    private PricingServices _pricingServices;
-    private double _convertedPrice;
-    private String _description;
-    private AppDataBase _db;
     private static final int REQUEST_IMAGE_CAPTURE = 10;
     private static final int REQUEST_WRITE_PERMISSION = 20;
     private static final String LOG_TAG = "Text API";
     private static final String SAVED_INSTANCE_URI = "uri";
     private static final String SAVED_INSTANCE_RESULT = "result";
-    private TextView scanResults;
+
+    private PricingServices _pricingServices;
+    private OCRServices _ocrServices;
+
+    private Cart _cart;
+    private double _convertedPrice;
+    private String _description;
+    private AppDataBase _db;
+
     private Uri capturedImageUri;
-    private TextRecognizer textDetector;
+    private TextView scanResults;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,13 +58,14 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
             scanResults.setText(savedInstanceState.getString(SAVED_INSTANCE_RESULT));
         }
 
-        textDetector = new TextRecognizer.Builder(getApplicationContext()).build();
         initComponents(getIntent().getStringExtra("calling activity"));
     }
 
-    //todo - importnt. The switch to this CartReviewActivity will be from 2 places: 1. When starting a new cart.
-    //todo 2. When entering an existing cart - in which case the items should be fetched from the db.
-    //todo - This implementation is now for a new EMPTY cart only.
+    /* todo - important.
+    The switch to this CartReviewActivity will be from 2 places:
+    1. When starting a new cart.
+    2. When entering an existing cart - in which case the items should be fetched from the db.
+    This implementation is now for a new EMPTY cart only.*/
     private void initComponents(String callingActivity)
     {
         ImageButton captureImageButton = findViewById(R.id.cameraButton);
@@ -88,11 +88,11 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
             //todo - this logic needs to change to getting the cart by the id from the db..that will give us the description too
             int id = getIntent().getIntExtra("cart id", -1);
             _cart.setId(id);
-            _cart.items.addAll(_db.itemDao().getItemsByCartId(id));
+            _cart.GetItems().addAll(_db.itemDao().getItemsByCartId(id));
         }
 
-        _pricingServices = new PricingServices(this);
-        ArrayAdapter<Item> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, _cart.items);
+        _pricingServices = new PricingServices();
+        ArrayAdapter<Item> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, _cart.GetItems());
         ListView itemListView = findViewById(R.id._dynamic_item_list);
         itemListView.setAdapter(adapter);
         if(SettingsPrefActivity.ShouldRequestCartDescription())
@@ -100,6 +100,8 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
             DescriptionDialogFragment cartDescriptionDialogFragment = DescriptionDialogFragment.newInstance("moo", DescriptionDialogFragment.DialogPurpose.cartDescription);
             cartDescriptionDialogFragment.show(getSupportFragmentManager(), "GetDescription");
         }
+
+        _ocrServices = new OCRServices();
     }
 
 
@@ -107,51 +109,8 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             launchMediaScanIntent();
-            try {
-                Bitmap bitmap = decodeBitmapUri(this, capturedImageUri);
-                if (textDetector.isOperational() && bitmap != null) {
-                    Frame frame = new Frame.Builder().setBitmap(bitmap).build();
-                    SparseArray<TextBlock> textBlocks = textDetector.detect(frame);
-                    String blocks = "";
-                    String lines = "";
-                    String words = "";
-                    for (int index = 0; index < textBlocks.size(); index++) {
-                        //extract scanned text blocks here
-                        TextBlock tBlock = textBlocks.valueAt(index);
-                        blocks = blocks + tBlock.getValue() + "\n" + "\n";
-                        for (Text line : tBlock.getComponents()) {
-                            //extract scanned text lines here
-                            lines = lines + line.getValue() + "\n";
-                            for (Text element : line.getComponents()) {
-                                //extract scanned text words here
-                                words = words + element.getValue() + ", ";
-                            }
-                        }
-                    }
-                    if (textBlocks.size() == 0) {
-                        scanResults.setText("Scan Failed: Found nothing to scan");
-                    } else {
-//                        scanResults.setText(scanResults.getText() + "Blocks: " + "\n");
-//                        scanResults.setText(scanResults.getText() + blocks + "\n");
-//                        scanResults.setText(scanResults.getText() + "---------" + "\n");
-//                        scanResults.setText(scanResults.getText() + "Lines: " + "\n");
-//                        scanResults.setText(scanResults.getText() + lines + "\n");
-//                        scanResults.setText(scanResults.getText() + "---------" + "\n");
-//                        scanResults.setText(scanResults.getText() + "Words: " + "\n");
-//                        scanResults.setText(scanResults.getText() + words + "\n");
-//                        scanResults.setText(scanResults.getText() + "---------" + "\n");
-                        scanResults.setText(words + "\n");
-                        System.out.println(words);
-                    }
-                } else {
-                    scanResults.setText("Could not set up the detector!");
-                }
-            } catch (Exception e) {
-                Toast.makeText(this, "Failed to load Image", Toast.LENGTH_SHORT)
-                        .show();
-                Log.e(LOG_TAG, e.toString());
-            }
-
+            String str = _ocrServices.getTextFromCapturedImage(getApplicationContext(), this, capturedImageUri);
+            scanResults.setText(str);
             handleCapturedImage();
         }
     }
@@ -173,7 +132,9 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
                 itemDescriptionDialogFragment.show(getSupportFragmentManager(), "GetDescription");
             }
             else
-                OnItemDescriptionDone("Item #" + Integer.toString(_cart.items.size() + 1));
+            {
+                OnItemDescriptionDone("Item #" + Integer.toString(_cart.GetItems().size() + 1));
+            }
         }
     }
 
@@ -237,7 +198,6 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
         this.sendBroadcast(mediaScanIntent);
     }
 
-
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         if (capturedImageUri != null) {
@@ -245,23 +205,5 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
             outState.putString(SAVED_INSTANCE_RESULT, scanResults.getText().toString());
         }
         super.onSaveInstanceState(outState);
-    }
-
-
-    private Bitmap decodeBitmapUri(Context ctx, Uri uri) throws FileNotFoundException {
-        int targetW = 600;
-        int targetH = 600;
-        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
-        bmOptions.inJustDecodeBounds = true;
-        BitmapFactory.decodeStream(ctx.getContentResolver().openInputStream(uri), null, bmOptions);
-        int photoW = bmOptions.outWidth;
-        int photoH = bmOptions.outHeight;
-
-        int scaleFactor = Math.min(photoW / targetW, photoH / targetH);
-        bmOptions.inJustDecodeBounds = false;
-        bmOptions.inSampleSize = scaleFactor;
-
-        return BitmapFactory.decodeStream(ctx.getContentResolver()
-                .openInputStream(uri), null, bmOptions);
     }
 }
