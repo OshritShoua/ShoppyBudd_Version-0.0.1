@@ -24,6 +24,12 @@ public class OCRServices {
     private HashMap<Character, String> _currencySymbolsToCodes;//todo - this might change to a bimap
     private String _currentTextCaptured = null;
 
+    public String GetCurrentPriceCaptured() {
+        return _currentPriceCaptured;
+    }
+
+    private String _currentPriceCaptured;
+
     public OCRServices()
     {
         init();
@@ -46,6 +52,7 @@ public class OCRServices {
     public void GetTextFromCapturedImage(Context appContext, Context context, Uri capturedImageUri)
     {
         TextRecognizer textDetector = new TextRecognizer.Builder(appContext).build();
+        _currentTextCaptured = "";
 
         try {
             Bitmap bitmap = decodeBitmapUri(context, capturedImageUri);
@@ -65,7 +72,7 @@ public class OCRServices {
                         lines = lines + line.getValue() + "\n";
                         for (Text element : line.getComponents()) {
                             //extract scanned text words here
-                            words = words + element.getValue() + ", ";
+                            words = words + element.getValue() + " ";
                         }
                     }
                 }
@@ -182,7 +189,7 @@ public class OCRServices {
 //        }
 //
 //        _currentTextCaptured = filteredText;
-        filteredText =  "99.99";
+        _currentPriceCaptured = filteredText =  "99.99";
         if (!foundPriceInText(filteredText)) {
             filteredText = applyHeuristicsOnText(filteredText);
             if (!foundPriceInText(filteredText)) {

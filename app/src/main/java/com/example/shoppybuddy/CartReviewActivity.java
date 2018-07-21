@@ -125,7 +125,7 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
         else
         {
             //todo :  what if couldn't convert
-            _originalPrice = Double.parseDouble(_ocrServices.GetCurrentTextCaptured());
+            _originalPrice = Double.parseDouble(_ocrServices.GetCurrentPriceCaptured());
             _pricingServices.ConvertPrice(_originalPrice);
             _convertedPrice = _pricingServices.GetConvertedPrice();
 
