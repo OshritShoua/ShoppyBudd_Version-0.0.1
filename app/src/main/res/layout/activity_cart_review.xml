@@ -9,29 +9,28 @@
     <ListView
         android:id="@+id/_dynamic_item_list"
         android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginBottom="24dp"
+        android:layout_height="339dp"
+        android:layout_marginBottom="8dp"
         android:layout_marginTop="24dp"
-        app:layout_constraintBottom_toTopOf="@+id/button_capture_image"
+        app:layout_constraintBottom_toTopOf="@+id/scanResults"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textview_cart_name"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintTop_toBottomOf="@+id/cartNameText"
+        app:layout_constraintVertical_bias="1.0" />
 
     <ImageButton
-        android:id="@+id/button_capture_image"
+        android:id="@+id/cameraButton"
         android:layout_width="81dp"
         android:layout_height="56dp"
         android:layout_marginBottom="16dp"
-        android:onClick="OnCameraButtonClick"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:srcCompat="@drawable/camera_icon" />
 
     <TextView
-        android:id="@+id/textview_cart_name"
+        android:id="@+id/cartNameText"
         android:layout_width="0dp"
         android:layout_height="31dp"
         android:layout_marginEnd="24dp"
@@ -48,4 +47,20 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/scanResults"
+        android:layout_width="344dp"
+        android:layout_height="83dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginStart="8dp"
+        android:text="scanResults"
+        app:layout_constraintBottom_toTopOf="@+id/cameraButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:ignore="MissingConstraints"
+        tools:text="Scan results will be shown here" />
 </android.support.constraint.ConstraintLayout>
