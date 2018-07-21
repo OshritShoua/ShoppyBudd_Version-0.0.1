@@ -182,7 +182,7 @@ public class OCRServices {
 //        }
 //
 //        _currentTextCaptured = filteredText;
-        _currentTextCaptured = filteredText =  "99.99";
+        filteredText =  "99.99";
         if (!foundPriceInText(filteredText)) {
             filteredText = applyHeuristicsOnText(filteredText);
             if (!foundPriceInText(filteredText)) {
