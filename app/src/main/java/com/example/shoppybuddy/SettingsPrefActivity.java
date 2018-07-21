@@ -1,12 +1,8 @@
 package com.example.shoppybuddy;
 
-import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
@@ -31,7 +27,6 @@ public class SettingsPrefActivity extends AppCompatPreferenceActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
         // load settings fragment
         getFragmentManager().beginTransaction().replace(android.R.id.content, new MainPreferenceFragment()).commit();
     }
@@ -47,7 +42,7 @@ public class SettingsPrefActivity extends AppCompatPreferenceActivity {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.pref_main);
 
-
+            //todo: delete?
             // gallery EditText change listener
             //bindPreferenceSummaryToValue(findPreference(getString(R.string.key_gallery_name)));
 
@@ -75,12 +70,12 @@ public class SettingsPrefActivity extends AppCompatPreferenceActivity {
         if (item.getItemId() == android.R.id.home) {
             onBackPressed();
         }
+
         return super.onOptionsItemSelected(item);
     }
 
     private static void bindPreferenceSummaryToValue(Preference preference) {
         preference.setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
-
         sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
                 PreferenceManager
                         .getDefaultSharedPreferences(preference.getContext())
@@ -165,6 +160,7 @@ public class SettingsPrefActivity extends AppCompatPreferenceActivity {
     private static void onItemDescriptionPrefChange(Preference preference, Object o)
     {
         _shouldRequestItemDescription = (boolean)o;
+        //todo: delete?
 //        if(_shouldRequestItemDescription)
 //            preference.setSummary(R.string.summary_request_item_description);
 //        else
@@ -174,6 +170,7 @@ public class SettingsPrefActivity extends AppCompatPreferenceActivity {
     private static void onCartDescriptionPrefChange(Preference preference, Object o)
     {
         _shouldRequestCartDescription = (boolean)o;
+        //todo: delete?
 //        if(_shouldRequestItemDescription)
 //            preference.setSummary(R.string.summary_request_item_description);
 //        else
