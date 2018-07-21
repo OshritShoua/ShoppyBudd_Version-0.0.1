@@ -21,11 +21,16 @@ import java.util.HashMap;
 public class OCRServices {
 
     private static final String TAG = "ShoppyBuddy.java";
-    public HashMap<Character, String> _currencySymbolsToCodes;//todo - this might change to a bimap
+    private HashMap<Character, String> _currencySymbolsToCodes;//todo - this might change to a bimap
+    private String _currentTextCaptured = null;
 
-    public void OCRServices()
+    public OCRServices()
     {
         init();
+    }
+
+    public String GetCurrentTextCaptured() {
+        return _currentTextCaptured;
     }
 
     private void init()
@@ -38,9 +43,8 @@ public class OCRServices {
         _currencySymbolsToCodes.put('$', "USD");
     }
 
-    public String getTextFromCapturedImage(Context appContext, Context context, Uri capturedImageUri)
+    public void GetTextFromCapturedImage(Context appContext, Context context, Uri capturedImageUri)
     {
-       String result = null;
         TextRecognizer textDetector = new TextRecognizer.Builder(appContext).build();
 
         try {
@@ -66,7 +70,7 @@ public class OCRServices {
                     }
                 }
                 if (textBlocks.size() == 0) {
-                    result = "Scan Failed: Found nothing to scan";
+                    _currentTextCaptured = "Scan Failed: Found nothing to scan";
                 } else {
 //                        scanResults.setText(scanResults.getText() + "Blocks: " + "\n");
 //                        scanResults.setText(scanResults.getText() + blocks + "\n");
@@ -77,17 +81,15 @@ public class OCRServices {
 //                        scanResults.setText(scanResults.getText() + "Words: " + "\n");
 //                        scanResults.setText(scanResults.getText() + words + "\n");
 //                        scanResults.setText(scanResults.getText() + "---------" + "\n");
-                    result = words;
+                    _currentTextCaptured = words;
                     System.out.println(words);
                 }
             } else {
-                result = "Could not set up the detector!";
+                _currentTextCaptured = "Could not set up the detector!";
             }
         } catch (Exception e) {
             Log.e(TAG, "Failed to load Image");
         }
-
-        return result;
     }
 
     private Bitmap decodeBitmapUri(Context ctx, Uri uri) throws FileNotFoundException {
@@ -162,13 +164,43 @@ public class OCRServices {
 //        return bitmap;
 //    }
 
+    public boolean parsePriceFromTextSucceeded()
+    {
+        String filteredText = getFilteredText(_currentTextCaptured);
+        //todo: implement
+//        String[] results = filteredText.split("X");
+//        for(String res : results)
+//        {
+//            if(res.matches(_currencySymbolsToCodes.keySet().toString()))
+//            {
+//                res.replaceAll(_currencySymbolsToCodes.keySet().toString(), " ");
+//                if(foundPriceInText(res))
+//                {
+//                    filteredText = res;
+//                }
+//            }
+//        }
+//
+//        _currentTextCaptured = filteredText;
+        _currentTextCaptured = filteredText =  "99.99";
+        if (!foundPriceInText(filteredText)) {
+            filteredText = applyHeuristicsOnText(filteredText);
+            if (!foundPriceInText(filteredText)) {
+                //todo - send message to the user to try and take a picture again, and send him to the camera again
+                return false;
+            }
+        }
+
+        return true;   //todo - if this is still 'false', change it
+    }
+
     @NonNull
     private String getFilteredText(String rawRecognizedText)
     {
         Log.v(TAG, "OCRED TEXT: " + rawRecognizedText);
 
         rawRecognizedText = rawRecognizedText.trim();
-        ArrayList<Character> whitelist = new ArrayList<>(Chars.asList(Chars.concat(" .,1234567890".toCharArray(), Chars.toArray(_currencySymbolsToCodes.keySet()))));
+        ArrayList<Character> whitelist = new ArrayList<>(Chars.asList(Chars.concat(" .1234567890".toCharArray(), Chars.toArray(_currencySymbolsToCodes.keySet()))));
         StringBuilder builder = new StringBuilder();
         boolean foundMatch;
         for (char recognizedChar : rawRecognizedText.toCharArray()) {
@@ -188,31 +220,24 @@ public class OCRServices {
         return builder.toString();
     }
 
-    private boolean parsePriceFromTextSucceeded(String rawRecognizedText)
-    {
-        String filteredText = getFilteredText(rawRecognizedText);
-        if (!foundPriceInText(filteredText)) {
-            filteredText = ApplyHeuristicsOnText(filteredText);
-            if (!foundPriceInText(filteredText)) {
-                //todo - send message to the user to try and take a picture again, and send him to the camera again
-                return false;
-            }
-        }
-
-        //_originalPrice = Double.parseDouble("526"); //filteredText
-        return false;   //todo - if this is still 'false', change it
-    }
-
-
-    //todo: implement
-    private String ApplyHeuristicsOnText(String filteredText)
+    //todo: implement - maybe remove to util class
+    private String applyHeuristicsOnText(String filteredText)
     {
         return filteredText;
     }
 
-    //todo: implement
+    //todo: implement - maybe remove to util class
     private boolean foundPriceInText(String filteredText)
     {
-        return true;
+        boolean priceWasFound = false;
+        try {
+            Double.parseDouble(filteredText);
+            priceWasFound = true;
+        } catch (NumberFormatException e)
+        {
+           //If we got here, price wasn't found in filtered text
+        }
+
+        return priceWasFound;
     }
 }

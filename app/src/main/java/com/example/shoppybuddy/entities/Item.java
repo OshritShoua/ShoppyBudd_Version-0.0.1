@@ -9,16 +9,19 @@ public class Item
 {
     @PrimaryKey(autoGenerate = true)
     private int _id;
-    @ColumnInfo(name = "price")
-    private double _price;
+    @ColumnInfo(name = "original price")
+    private double _originalPrice;
+    @ColumnInfo(name = "converted price")
+    private double _convertedPrice;
     @ColumnInfo(name = "description")
     private String _description;
     @ColumnInfo(name = "cart id")
     private int _cart_id;
 
-    public Item(double price, String description, int cart_id)
+    public Item(double originalPrice, double convertedPrice, String description, int cart_id)
     {
-        _price = price;
+        _originalPrice = originalPrice;
+        _convertedPrice = convertedPrice;
         _description = description;
         _cart_id = cart_id;
     }
@@ -26,7 +29,7 @@ public class Item
     @Override
     public String toString()
     {
-        return _description + " " + Double.toString(_price);
+        return _description + " " + Double.toString(_originalPrice) + " " + Double.toString(_convertedPrice);
     }
 
     public int get_id()
@@ -39,14 +42,24 @@ public class Item
         this._id = _id;
     }
 
-    public double getPrice()
+    public double getOriginalPrice()
     {
-        return _price;
+        return _originalPrice;
     }
 
-    public void setPrice(double price)
+    public void setOriginalPrice(double price)
     {
-        _price = price;
+        _originalPrice = price;
+    }
+
+    public double getConvertedPrice()
+    {
+        return _convertedPrice;
+    }
+
+    public void setConvertedPrice(double price)
+    {
+        _convertedPrice = price;
     }
 
     public String get_description()

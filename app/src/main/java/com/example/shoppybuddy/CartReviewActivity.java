@@ -33,7 +33,6 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
 {
     private static final int REQUEST_IMAGE_CAPTURE = 10;
     private static final int REQUEST_WRITE_PERMISSION = 20;
-    private static final String LOG_TAG = "Text API";
     private static final String SAVED_INSTANCE_URI = "uri";
     private static final String SAVED_INSTANCE_RESULT = "result";
 
@@ -41,6 +40,7 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
     private OCRServices _ocrServices;
 
     private Cart _cart;
+    private double _originalPrice;
     private double _convertedPrice;
     private String _description;
     private AppDataBase _db;
@@ -109,23 +109,26 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             launchMediaScanIntent();
-            String str = _ocrServices.getTextFromCapturedImage(getApplicationContext(), this, capturedImageUri);
-            scanResults.setText(str);
+            _ocrServices.GetTextFromCapturedImage(getApplicationContext(), this, capturedImageUri);
+            scanResults.setText(_ocrServices.GetCurrentTextCaptured());
             handleCapturedImage();
         }
     }
 
     private void handleCapturedImage()
     {
-        double[] priceHolder = new double[1];
-        if (!_pricingServices.TryGetConvertedPrice(priceHolder))
+        if (!_ocrServices.parsePriceFromTextSucceeded())
         {
             RecaptureImageDialogFragment recaptureImageDialogFragment = new RecaptureImageDialogFragment();
             recaptureImageDialogFragment.show(getSupportFragmentManager(), "RetakeImage");
         }
         else
         {
-            _convertedPrice = priceHolder[0];
+            //todo :  what if couldn't convert
+            _originalPrice = Double.parseDouble(_ocrServices.GetCurrentTextCaptured());
+            _pricingServices.ConvertPrice(_originalPrice);
+            _convertedPrice = _pricingServices.GetConvertedPrice();
+
             if(SettingsPrefActivity.ShouldRequestItemDescription())
             {
                 DescriptionDialogFragment itemDescriptionDialogFragment = DescriptionDialogFragment.newInstance("moo", DescriptionDialogFragment.DialogPurpose.itemDescription);
@@ -141,7 +144,7 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
     public void OnItemDescriptionDone(String description)
     {
         _description = description;
-        Item item = new Item(_convertedPrice, _description, _cart.getId());
+        Item item = new Item(_originalPrice, _convertedPrice, _description, _cart.getId());
         _cart.AddItem(item);
         _db.itemDao().insertAll(item);
     }

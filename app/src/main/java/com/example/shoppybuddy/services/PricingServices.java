@@ -19,13 +19,17 @@ import retrofit2.http.Query;
 public class PricingServices
 {
     private static final String TAG = "ShoppyBuddy.java";
-    private double _originalPrice = 5.26;
-    private double _convertedPrice;
     private String _baseCurrencyCode = "USD";
     private String _targetCurrencyCode = "ILS";
     private double _euroToBaseCurrencyRate;
     private double _euroToTargetCurrencyRate;
     private boolean _parsingComplete;
+
+    public double GetConvertedPrice() {
+        return _convertedPrice;
+    }
+
+    private double _convertedPrice;
 
     public boolean IsPriceParsingComplete(){return _parsingComplete;}
 
@@ -37,7 +41,24 @@ public class PricingServices
                 @Query("symbols") String requestedRates);
     }
 
-    public String getConversionRatesFromApi() throws IOException
+    public boolean ConvertPrice(double priceToConvert)
+    {
+        try
+        {
+            String ratesResponse = getConversionRatesFromApi();
+            parseRatesFromConversionApiResponse(ratesResponse);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            return false;
+        }
+
+        calculateConvertedPrice(priceToConvert);
+        return true;
+    }
+
+    private String getConversionRatesFromApi() throws IOException
     {
 
         if (android.os.Build.VERSION.SDK_INT > 9) {
@@ -56,7 +77,7 @@ public class PricingServices
     }
 
 
-    public void parseRatesFromConversionApiResponse(String response) throws JSONException
+    private void parseRatesFromConversionApiResponse(String response) throws JSONException
     {
         JSONObject json = new JSONObject(response);
 
@@ -89,37 +110,12 @@ public class PricingServices
         _euroToTargetCurrencyRate = euroToTargetCurrencyRate;
     }
 
-    public boolean TryGetConvertedPrice(final double[] priceHolder)
+    private void calculateConvertedPrice(double priceToCalc)
     {
-          return true;
-          //todo: implement
-//        if (!parsePriceFromPhotoSucceeded())
-//        try
-//        {
-//            String ratesResponse = getConversionRatesFromApi();
-//            parseRatesFromConversionApiResponse(ratesResponse);
-//        }
-//        catch (Exception e)
-//        {
-//            e.printStackTrace();
-//        }
-//
-//        calculateConvertedPrice();
-//        priceHolder[0] = _convertedPrice;
-//        return true;
-    }
-
-    private void calculateConvertedPrice()
-    {
-        double priceInEuros = _originalPrice / _euroToBaseCurrencyRate;
+        double priceInEuros = priceToCalc / _euroToBaseCurrencyRate;
         double priceInTargetCurrency = priceInEuros * _euroToTargetCurrencyRate;
         _convertedPrice = priceInTargetCurrency;
         _parsingComplete = true;
-    }
-
-    public double GetConvertedPrice()
-    {
-        return _convertedPrice;
     }
 }
 

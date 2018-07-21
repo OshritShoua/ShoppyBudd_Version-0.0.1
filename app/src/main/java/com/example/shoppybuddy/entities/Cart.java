@@ -39,9 +39,9 @@ public class Cart
     List<Item> items = new ArrayList<>();
     //List<String> items = Arrays.asList("Shirt   medium   5.7$", "Pants   large   10.50$", "Item3        112");//todo - this will obviously change to an array list of type Item
 
-    public void AddItem(double convertedPrice, String itemDesription, int cart_id)
+    public void AddItem(double originalPrice, double convertedPrice, String itemDesription, int cart_id)
     {
-        items.add(new Item(convertedPrice, itemDesription, cart_id));
+        items.add(new Item(originalPrice, convertedPrice, itemDesription, cart_id));
     }
 
     public void AddItem(Item item)
