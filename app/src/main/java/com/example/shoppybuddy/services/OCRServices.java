@@ -174,21 +174,55 @@ public class OCRServices {
     public boolean parsePriceFromTextSucceeded()
     {
         String filteredText = getFilteredText(_currentTextCaptured);
+        String text = null;
         //todo: implement
-//        String[] results = filteredText.split("X");
-//        for(String res : results)
-//        {
-//            if(res.matches(_currencySymbolsToCodes.keySet().toString()))
-//            {
-//                res.replaceAll(_currencySymbolsToCodes.keySet().toString(), " ");
-//                if(foundPriceInText(res))
-//                {
-//                    filteredText = res;
-//                }
-//            }
-//        }
-//
-//        _currentTextCaptured = filteredText;
+        String[] results = filteredText.split("[X ]", -1);
+        ArrayList<String> pricesInResults = new ArrayList<>();
+        for(String res : results)
+        {
+            if(res.isEmpty())
+            {
+                continue;
+            }
+
+            String[] isContainCurrencySymbol = res.split(_currencySymbolsToCodes.keySet().toString(), -1);
+
+            if(isContainCurrencySymbol.length > 1)
+            {
+                res = res.replaceAll(_currencySymbolsToCodes.keySet().toString(), " ");
+                if(foundPriceInText(res))
+                {
+                    text = res;
+                    break;
+                }
+            }
+            else if(foundPriceInText(res))
+            {
+                pricesInResults.add(res);
+            }
+        }
+
+        if(pricesInResults.size() == 1)
+        {
+            text = pricesInResults.get(0);
+        }
+        else if(pricesInResults.size() > 0)
+        {
+            int indexInPrice;
+
+            if((indexInPrice = isThereOnlyOneDoubleInPrices(pricesInResults)) != -1)
+            {
+                text = pricesInResults.get(indexInPrice);
+            }
+        }
+        else
+        {
+            if(text == null)
+            {
+                System.out.println("couldn't find text");
+            }
+        }
+
         _currentPriceCaptured = filteredText =  "99.99";
         if (!foundPriceInText(filteredText)) {
             filteredText = applyHeuristicsOnText(filteredText);
@@ -199,6 +233,32 @@ public class OCRServices {
         }
 
         return true;   //todo - if this is still 'false', change it
+    }
+
+    private int isThereOnlyOneDoubleInPrices(ArrayList<String> pricesList)
+    {
+        Object[] priceArray = pricesList.toArray();
+        boolean doublePriceWasFound = false;
+        int result = -1;
+
+        for(int i = 0; i < priceArray.length; i++)
+        {
+            if(((String)priceArray[i]).contains("."))
+            {
+                if(!doublePriceWasFound)
+                {
+                    doublePriceWasFound = true;
+                    result = i;
+                }
+                else
+                {
+                    break;
+                }
+
+            }
+        }
+
+        return result;
     }
 
     @NonNull
