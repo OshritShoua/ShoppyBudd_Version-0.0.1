@@ -25,7 +25,6 @@
     <PreferenceCategory android:title="@string/pref_title_currency_conversions">
 
         <ListPreference
-            android:defaultValue="0"
             android:dialogTitle="@string/dialog_title_source_currency"
             android:entries="@array/pref_currency_entries"
             android:entryValues="@array/pref_currency_values"

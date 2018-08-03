@@ -27,6 +27,8 @@ import com.example.shoppybuddy.entities.Item;
 import com.example.shoppybuddy.services.OCRServices;
 import com.example.shoppybuddy.services.PricingServices;
 
+import org.w3c.dom.Text;
+
 import java.io.File;
 
 public class CartReviewActivity extends AppCompatActivity implements RecaptureImageDialogFragment.RecaptureImageDialogListener, DescriptionDialogFragment.DescriptionDialogListener
@@ -77,31 +79,48 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
             }
         });
 
-        _cart = new Cart();
         _db = Room.databaseBuilder(getApplicationContext(), AppDataBase.class, "userShoppings").fallbackToDestructiveMigration().allowMainThreadQueries().build();
         if(callingActivity.equals(MainActivity.class.getSimpleName())) //todo - add a remark to notes about having had to move the "if else" with the database logic before creating the adapter
         {
+            _cart = new Cart(SettingsPrefActivity.get_preferredTargetCurrencySymbol());
             _cart.setId((int)(_db.cartDao().insert(_cart)));
+            if(SettingsPrefActivity.ShouldRequestCartDescription())
+            {
+                DescriptionDialogFragment cartDescriptionDialogFragment = DescriptionDialogFragment.newInstance("moo", DescriptionDialogFragment.DialogPurpose.cartDescription);
+                cartDescriptionDialogFragment.show(getSupportFragmentManager(), "GetDescription");
+            }
+            else
+                OnCartDescriptionDone("My shopping cart #" + Integer.toString(_cart.getId() + 1));
         }
         else
         {
             //todo - this logic needs to change to getting the cart by the id from the db..that will give us the description too
             int id = getIntent().getIntExtra("cart id", -1);
-            _cart.setId(id);
+            _cart = _db.cartDao().getCartById(id);
+            UpdateCartNameTextView(_cart.get_description());
             _cart.GetItems().addAll(_db.itemDao().getItemsByCartId(id));
         }
 
         _pricingServices = new PricingServices();
+        InitializeItemListView();
+        UpdateSumUI();
+        _ocrServices = new OCRServices();
+    }
+
+    private void InitializeItemListView()
+    {
         ArrayAdapter<Item> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, _cart.GetItems());
         ListView itemListView = findViewById(R.id._dynamic_item_list);
         itemListView.setAdapter(adapter);
-        if(SettingsPrefActivity.ShouldRequestCartDescription())
-        {
-            DescriptionDialogFragment cartDescriptionDialogFragment = DescriptionDialogFragment.newInstance("moo", DescriptionDialogFragment.DialogPurpose.cartDescription);
-            cartDescriptionDialogFragment.show(getSupportFragmentManager(), "GetDescription");
-        }
+    }
 
-        _ocrServices = new OCRServices();
+    private void UpdateSumUI()
+    {
+        TextView totalSumTextView = findViewById(R.id.totalSumText);
+        String currencyCode = SettingsPrefActivity.get_preferredTargetCurrencyCode();
+        String currencySymbol = currencyCode != null ? Character.toString(OCRServices.getCodesToSymbolsMapping().get(currencyCode)): "";
+        String totalPrice = Double.toString(_cart.get_totalCost());
+        totalSumTextView.setText(totalPrice);
     }
 
 
@@ -144,13 +163,23 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
     public void OnItemDescriptionDone(String description)
     {
         _description = description;
-        Item item = new Item(_originalPrice, _convertedPrice, _description, _cart.getId());
+        Item item = new Item(_originalPrice, _convertedPrice, _description, _cart.getId(),
+                SettingsPrefActivity.get_preferredSourceCurrencySymbol(), SettingsPrefActivity.get_preferredTargetCurrencySymbol());
         _cart.AddItem(item);
         _db.itemDao().insertAll(item);
+        _db.cartDao().updateCart(_cart);
+        UpdateSumUI();
     }
 
     @Override
     public void OnCartDescriptionDone(String description)
+    {
+        _cart.set_description(description);
+        _db.cartDao().updateCart(_cart);
+        UpdateCartNameTextView(description);
+    }
+
+    public void UpdateCartNameTextView(String description)
     {
         TextView textView = findViewById(R.id.cartNameText);
         textView.setText(description);

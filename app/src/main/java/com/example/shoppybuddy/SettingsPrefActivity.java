@@ -1,5 +1,6 @@
 package com.example.shoppybuddy;
 
+import android.content.SharedPreferences;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -13,14 +14,40 @@ import android.preference.RingtonePreference;
 import android.text.TextUtils;
 import android.view.MenuItem;
 
+import com.example.shoppybuddy.services.OCRServices;
+
 public class SettingsPrefActivity extends AppCompatPreferenceActivity {
     private static final String TAG = SettingsPrefActivity.class.getSimpleName();
-    private static boolean _shouldRequestItemDescription = true;
-    private static boolean _shouldRequestCartDescription = true;
+    private static boolean _shouldRequestItemDescription;
+    private static boolean _shouldRequestCartDescription;
+    private static String _preferredSourceCurrencyCode = "";
+    private static Character _preferredSourceCurrencySymbol;
+    private static String _preferredTargetCurrencyCode = "";
+    private static Character _preferredTargetCurrencySymbol;
 
     public static boolean ShouldRequestItemDescription()
     {
         return _shouldRequestItemDescription;
+    }
+
+    public static String get_preferredSourceCurrencyCode()
+    {
+        return _preferredSourceCurrencyCode;
+    }
+
+    public static String get_preferredTargetCurrencyCode()
+    {
+        return _preferredTargetCurrencyCode;
+    }
+
+    public static Character get_preferredSourceCurrencySymbol()
+    {
+        return _preferredSourceCurrencySymbol;
+    }
+
+    public static Character get_preferredTargetCurrencySymbol()
+    {
+        return _preferredTargetCurrencySymbol;
     }
 
     @Override
@@ -36,12 +63,34 @@ public class SettingsPrefActivity extends AppCompatPreferenceActivity {
         return _shouldRequestCartDescription;
     }
 
+    public static void InitValuesFromSharedPrefs(SharedPreferences sharedPreferences)
+    {
+        _shouldRequestItemDescription = sharedPreferences.getBoolean("key_request_description_for_item",true);
+        _shouldRequestCartDescription = sharedPreferences.getBoolean("key_request_description_for_cart",true);
+        String sourceCurrency = sharedPreferences.getString("key_source_currency", null);
+        if(sourceCurrency != null)
+        {
+            _preferredSourceCurrencySymbol = sourceCurrency.charAt(0);
+            _preferredSourceCurrencyCode = OCRServices.getSymbolsToCodesMapping().get(sourceCurrency.charAt(0));
+        }
+
+        String targetCurrency = sharedPreferences.getString("key_target_currency", null);
+        if(targetCurrency != null)
+        {
+            _preferredTargetCurrencySymbol = targetCurrency.charAt(0);
+            _preferredTargetCurrencyCode = OCRServices.getSymbolsToCodesMapping().get(targetCurrency.charAt(0));
+        }
+    }
+
     public static class MainPreferenceFragment extends PreferenceFragment {
         @Override
         public void onCreate(final Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.pref_main);
-
+//            CheckBoxPreference itemCheckbox = (CheckBoxPreference)findPreference(getString(R.string.key_request_description_for_item));
+//            itemCheckbox.setChecked(true);
+//            CheckBoxPreference cartCheckbox = (CheckBoxPreference)findPreference(getString(R.string.key_request_description_for_cart));
+//            cartCheckbox.setChecked(true);
             //todo: delete?
             // gallery EditText change listener
             //bindPreferenceSummaryToValue(findPreference(getString(R.string.key_gallery_name)));
@@ -60,8 +109,15 @@ public class SettingsPrefActivity extends AppCompatPreferenceActivity {
 
             findPreference(getString(R.string.key_request_description_for_item)).setOnPreferenceChangeListener(_prefChangeListener);
             findPreference(getString(R.string.key_request_description_for_cart)).setOnPreferenceChangeListener(_prefChangeListener);
-            findPreference(getString(R.string.key_source_currency)).setOnPreferenceChangeListener(_prefChangeListener);
-            findPreference(getString(R.string.key_target_currency)).setOnPreferenceChangeListener(_prefChangeListener);
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            String sourceCurrency = sharedPreferences.getString(getString(R.string.key_source_currency), "" );
+            String targetCurrency = sharedPreferences.getString(getString(R.string.key_target_currency), "" );
+            Preference sourceCurrencyPref = findPreference(getString(R.string.key_source_currency));
+            Preference targetCurrencyPref = findPreference(getString(R.string.key_target_currency));
+            sourceCurrencyPref.setOnPreferenceChangeListener(_prefChangeListener);
+            sourceCurrencyPref.setSummary(sourceCurrency);
+            targetCurrencyPref.setOnPreferenceChangeListener(_prefChangeListener);
+            targetCurrencyPref.setSummary(targetCurrency);
         }
     }
 
@@ -160,32 +216,29 @@ public class SettingsPrefActivity extends AppCompatPreferenceActivity {
     private static void onItemDescriptionPrefChange(Preference preference, Object o)
     {
         _shouldRequestItemDescription = (boolean)o;
-        //todo: delete?
-//        if(_shouldRequestItemDescription)
-//            preference.setSummary(R.string.summary_request_item_description);
-//        else
-//            preference.setSummary(R.string.summary_auto_generate_item_description);
     }
 
     private static void onCartDescriptionPrefChange(Preference preference, Object o)
     {
         _shouldRequestCartDescription = (boolean)o;
-        //todo: delete?
-//        if(_shouldRequestItemDescription)
-//            preference.setSummary(R.string.summary_request_item_description);
-//        else
-//            preference.setSummary(R.string.summary_auto_generate_item_description);
     }
 
     private static void onSourceCurrencyPrefChange(Preference preference, Object o)
     {
-        //todo - decide how to take the currency from the object
-        preference.setSummary(o.toString());
+        String selectedEntryValue = o.toString();
+        preference.setSummary(selectedEntryValue);
+        char currencySymbol = selectedEntryValue.charAt(0);
+        _preferredSourceCurrencySymbol = currencySymbol;
+        _preferredSourceCurrencyCode = OCRServices.getSymbolsToCodesMapping().get(currencySymbol);
     }
 
     private static void onTargetCurrencyPrefChange(Preference preference, Object o)
     {
-        preference.setSummary(o.toString());
+        String selectedEntryValue = o.toString();
+        preference.setSummary(selectedEntryValue);
+        char currencySymbol = selectedEntryValue.charAt(0);
+        _preferredTargetCurrencySymbol = currencySymbol;
+        _preferredTargetCurrencyCode = OCRServices.getSymbolsToCodesMapping().get(currencySymbol);
     }
 
 //    /**

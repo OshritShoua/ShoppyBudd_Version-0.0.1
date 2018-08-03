@@ -3,11 +3,15 @@ package com.example.shoppybuddy.services;
 import android.os.StrictMode;
 import android.util.Log;
 
+import com.example.shoppybuddy.SettingsPrefActivity;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -71,9 +75,18 @@ public class PricingServices
                 .addConverterFactory(GsonConverterFactory.create());
         Retrofit retrofit = builder.build();
         RatesClientRequest ratesProvider = retrofit.create(RatesClientRequest.class);
-        Call<ResponseBody> call = ratesProvider.getRates("28b1f943a2bc43b31e27eda845458bb8",
-                "USD,ILS,AUD,CAD,PLN,MXN");
+        List<String> codeList = new ArrayList<>(OCRServices.getSymbolsToCodesMapping().values());
+        StringBuilder sb = new StringBuilder();
+        for(String code : codeList) {
+            sb.append(code);
+            sb.append(',');
+        }
+        String delimitedCodes = sb.toString();
+        delimitedCodes = delimitedCodes.substring(0, delimitedCodes.length() - 1);
+
+        Call<ResponseBody> call = ratesProvider.getRates("28b1f943a2bc43b31e27eda845458bb8", delimitedCodes);
         return call.execute().body().string();
+
     }
 
 
@@ -87,6 +100,12 @@ public class PricingServices
             throw new JSONException("bad conversion url response");
         }
 
+        String selectedBaseCurrency = SettingsPrefActivity.get_preferredSourceCurrencyCode();
+        String selectedTargetCurrency = SettingsPrefActivity.get_preferredTargetCurrencyCode();
+        if(selectedBaseCurrency != null)        //todo - this fetches the currencies if they were selected.
+            _baseCurrencyCode = selectedBaseCurrency;//todo - oshrit should use this setting too, and try to ocr a currency symbol only if one wasn't selected. In addition, if not target currency is selected, we should prompt the user to select one
+        if(selectedTargetCurrency != null)
+            _targetCurrencyCode = selectedTargetCurrency;
         double euroToBaseCurrencyRate = -1;
         double euroToTargetCurrencyRate = -1;
         JSONObject currencyCodesToRates = json.getJSONObject("rates");

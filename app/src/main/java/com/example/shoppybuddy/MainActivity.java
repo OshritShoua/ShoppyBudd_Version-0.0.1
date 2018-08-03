@@ -2,6 +2,7 @@ package com.example.shoppybuddy;
 
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -10,6 +11,7 @@ import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.StrictMode;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -47,6 +49,9 @@ public class MainActivity extends AppCompatActivity
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        PreferenceManager.setDefaultValues(this,R.xml.pref_main ,true );
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        SettingsPrefActivity.InitValuesFromSharedPrefs(PreferenceManager.getDefaultSharedPreferences(this));
     }
 
     public void OnStartShoppingButtonClick(View view)
