@@ -115,32 +115,6 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
         }
     }
 
-    private void handleCapturedImage()
-    {
-        if (!_ocrServices.parsePriceFromTextSucceeded())
-        {
-            RecaptureImageDialogFragment recaptureImageDialogFragment = new RecaptureImageDialogFragment();
-            recaptureImageDialogFragment.show(getSupportFragmentManager(), "RetakeImage");
-        }
-        else
-        {
-            //todo :  what if couldn't convert
-            _originalPrice = Double.parseDouble(_ocrServices.GetCurrentPriceCaptured());
-            _pricingServices.ConvertPrice(_originalPrice);
-            _convertedPrice = _pricingServices.GetConvertedPrice();
-
-            if(SettingsPrefActivity.ShouldRequestItemDescription())
-            {
-                DescriptionDialogFragment itemDescriptionDialogFragment = DescriptionDialogFragment.newInstance("moo", DescriptionDialogFragment.DialogPurpose.itemDescription);
-                itemDescriptionDialogFragment.show(getSupportFragmentManager(), "GetDescription");
-            }
-            else
-            {
-                OnItemDescriptionDone("Item #" + Integer.toString(_cart.GetItems().size() + 1));
-            }
-        }
-    }
-
     public void OnItemDescriptionDone(String description)
     {
         _description = description;
@@ -186,6 +160,15 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
         }
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        if (capturedImageUri != null) {
+            outState.putString(SAVED_INSTANCE_URI, capturedImageUri.toString());
+            outState.putString(SAVED_INSTANCE_RESULT, scanResults.getText().toString());
+        }
+        super.onSaveInstanceState(outState);
+    }
+
     private void takePicture() {
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         File photo = new File(Environment.getExternalStorageDirectory(), "captured_image.jpg");
@@ -201,12 +184,29 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
         this.sendBroadcast(mediaScanIntent);
     }
 
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        if (capturedImageUri != null) {
-            outState.putString(SAVED_INSTANCE_URI, capturedImageUri.toString());
-            outState.putString(SAVED_INSTANCE_RESULT, scanResults.getText().toString());
+    private void handleCapturedImage()
+    {
+        if (!_ocrServices.parsePriceFromTextSucceeded(_pricingServices.get_baseCurrencyCode(), _pricingServices.get_targetCurrencyCode()))
+        {
+            RecaptureImageDialogFragment recaptureImageDialogFragment = new RecaptureImageDialogFragment();
+            recaptureImageDialogFragment.show(getSupportFragmentManager(), "RetakeImage");
         }
-        super.onSaveInstanceState(outState);
+        else
+        {
+            //todo :  what if couldn't convert
+            _originalPrice = Double.parseDouble(_ocrServices.GetCurrentPriceCaptured());
+            _pricingServices.ConvertPrice(_originalPrice);
+            _convertedPrice = _pricingServices.GetConvertedPrice();
+
+            if(SettingsPrefActivity.ShouldRequestItemDescription())
+            {
+                DescriptionDialogFragment itemDescriptionDialogFragment = DescriptionDialogFragment.newInstance("moo", DescriptionDialogFragment.DialogPurpose.itemDescription);
+                itemDescriptionDialogFragment.show(getSupportFragmentManager(), "GetDescription");
+            }
+            else
+            {
+                OnItemDescriptionDone("Item #" + Integer.toString(_cart.GetItems().size() + 1));
+            }
+        }
     }
 }

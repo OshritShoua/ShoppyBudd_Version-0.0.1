@@ -7,6 +7,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.Iterator;
 
 import okhttp3.ResponseBody;
@@ -28,6 +29,15 @@ public class PricingServices
     public double GetConvertedPrice() {
         return _convertedPrice;
     }
+
+    public String get_baseCurrencyCode() {
+        return _baseCurrencyCode;
+    }
+
+    public String get_targetCurrencyCode() {
+        return _targetCurrencyCode;
+    }
+
 
     private double _convertedPrice;
 
@@ -114,7 +124,9 @@ public class PricingServices
     {
         double priceInEuros = priceToCalc / _euroToBaseCurrencyRate;
         double priceInTargetCurrency = priceInEuros * _euroToTargetCurrencyRate;
-        _convertedPrice = priceInTargetCurrency;
+        _convertedPrice = Double.parseDouble(new DecimalFormat("##.##")
+
+                .format(priceInTargetCurrency));
         _parsingComplete = true;
     }
 }
