@@ -218,7 +218,11 @@ public class OCRServices {
                         //todo: what if there are two with same currency?
                         break;
                     }
+                }
 
+                if(text == null)
+                {
+                    //todo: if there are captured prices but not in the base currency?!
                 }
             }
 
@@ -248,6 +252,12 @@ public class OCRServices {
                 // todo: maybe apply heuristics and check again before returning false
                 return false;
             }
+        }
+
+        //Health check for all uncovered cases
+        if(text == null)
+        {
+            return false;
         }
 
         _currentPriceCaptured = text;
