@@ -2,9 +2,11 @@ package com.example.shoppybuddy;
 
 import android.arch.persistence.room.Room;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -46,7 +48,20 @@ public class CartListActivity extends AppCompatActivity
         _carts.clear();
         _carts.addAll(_db.cartDao().getAll());
         if(adapter == null)
-            adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, _carts);
+            adapter = new ArrayAdapter<Cart>(this, android.R.layout.simple_list_item_1, _carts)
+            {
+                @Override
+                public View getView(int position, View convertView, ViewGroup parent)
+                {
+                    View view = super.getView(position, convertView, parent);
+                    if(position % 2 == 0)
+                        view.setBackgroundColor(Color.parseColor("#50C878"));
+                    else
+                        view.setBackgroundColor(Color.parseColor("#c46d2f"));
+
+                    return view;
+                }
+            };
         final ListView cartListView = findViewById(R.id._dynamic_cart_list);
         cartListView.setAdapter(adapter);
         int x = cartListView.getWidth();

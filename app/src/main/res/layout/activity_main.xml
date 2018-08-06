@@ -9,44 +9,55 @@
     tools:layout_editor_absoluteY="25dp">
 
     <Button
-        android:id="@+id/button_StartShopping"
-        android:layout_width="0dp"
-        android:layout_height="99dp"
-        android:layout_marginBottom="124dp"
-        android:layout_marginEnd="32dp"
-        android:layout_marginLeft="32dp"
-        android:layout_marginRight="32dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="32dp"
-        android:background="#0095ff"
-        android:onClick="OnStartShoppingButtonClick"
-        android:text="@string/start_shopping"
-        android:textAllCaps="false"
-        android:textColor="@android:color/holo_orange_dark"
-        android:textSize="36sp"
-        app:layout_constraintBottom_toTopOf="@+id/button_MyBaskets"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:id="@+id/angry_btn2"
 
-    <Button
-        android:id="@+id/button_MyBaskets"
         android:layout_width="0dp"
-        android:layout_height="147dp"
-        android:layout_marginBottom="88dp"
+        android:layout_height="87dp"
+
         android:layout_marginEnd="32dp"
         android:layout_marginLeft="32dp"
         android:layout_marginRight="32dp"
         android:layout_marginStart="32dp"
-        android:background="#0095ff"
+        android:background="@drawable/buttonshape"
         android:onClick="OnMyCartsButtonClick"
+        android:shadowColor="#A8A8A8"
+        android:shadowDx="1"
+        android:shadowDy="0"
+        android:shadowRadius="5"
         android:text="@string/my_baskets"
-        android:textAllCaps="false"
-        android:textColor="@android:color/holo_orange_dark"
-        android:textSize="36sp"
+        android:textColor="#FFFFFF"
+        android:textSize="30sp"
         app:layout_constraintBottom_toTopOf="@+id/button_settings"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/angry_btn" />
+
+    <Button
+        android:id="@+id/angry_btn"
+
+        android:layout_width="0dp"
+        android:layout_height="87dp"
+
+        android:layout_marginEnd="32dp"
+        android:layout_marginLeft="32dp"
+        android:layout_marginRight="32dp"
+        android:layout_marginStart="32dp"
+        android:background="@drawable/buttonshape"
+        android:onClick="OnStartShoppingButtonClick"
+        android:shadowColor="#A8A8A8"
+        android:shadowDx="1"
+        android:shadowDy="0"
+        android:shadowRadius="5"
+        android:text="@string/go_shopping"
+        android:textColor="#FFFFFF"
+        android:textSize="30sp"
+        app:chainUseRtl="false"
+        app:layout_constraintBottom_toTopOf="@+id/angry_btn2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <ImageButton
         android:id="@+id/button_settings"

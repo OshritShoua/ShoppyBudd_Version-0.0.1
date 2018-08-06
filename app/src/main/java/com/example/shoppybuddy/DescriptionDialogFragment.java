@@ -33,8 +33,8 @@ public class DescriptionDialogFragment extends DialogFragment implements TextVie
 
     public interface DescriptionDialogListener
     {
-        public void OnItemDescriptionDone(String description);
-        public void OnCartDescriptionDone(String description);
+         void OnItemDescriptionDone(String description);
+         void OnCartDescriptionDone(String description);
     }
 
     private EditText mEditText;

@@ -35,8 +35,6 @@ public class PricingServices
 
     private double _convertedPrice;
 
-    public boolean IsPriceParsingComplete(){return _parsingComplete;}
-
     public interface RatesClientRequest
     {
         @GET("/latest")
@@ -102,8 +100,8 @@ public class PricingServices
 
         String selectedBaseCurrency = SettingsPrefActivity.get_preferredSourceCurrencyCode();
         String selectedTargetCurrency = SettingsPrefActivity.get_preferredTargetCurrencyCode();
-        if(selectedBaseCurrency != null)        //todo - this fetches the currencies if they were selected.
-            _baseCurrencyCode = selectedBaseCurrency;//todo - oshrit should use this setting too, and try to ocr a currency symbol only if one wasn't selected. In addition, if not target currency is selected, we should prompt the user to select one
+        if(selectedBaseCurrency != null)
+            _baseCurrencyCode = selectedBaseCurrency;
         if(selectedTargetCurrency != null)
             _targetCurrencyCode = selectedTargetCurrency;
         double euroToBaseCurrencyRate = -1;

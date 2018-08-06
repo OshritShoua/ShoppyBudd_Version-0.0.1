@@ -50,7 +50,6 @@ public class Cart
 
     @Ignore
     List<Item> items = new ArrayList<>();
-    //List<String> items = Arrays.asList("Shirt   medium   5.7$", "Pants   large   10.50$", "Item3        112");//todo - this will obviously change to an array list of type Item
 
     public void AddItem(Item item)
     {

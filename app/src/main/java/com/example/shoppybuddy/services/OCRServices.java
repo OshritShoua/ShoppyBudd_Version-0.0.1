@@ -56,7 +56,7 @@ public class OCRServices {
         return _currentTextCaptured;
     }
 
-    private void init() //todo - leaving this empty just in case I will use init later.
+    private void init()
     {
     }
 
@@ -137,7 +137,6 @@ public class OCRServices {
                 .openInputStream(uri), null, bmOptions);
     }
 
-//    todo: think of adding some of the actions here to the method from CartReviewActivity
 //    private Bitmap getAdjustedBitmapFromPhoto()
 //    {
 //        BitmapFactory.Options options = new BitmapFactory.Options();
