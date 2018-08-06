@@ -4,6 +4,8 @@ import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.PrimaryKey;
 
+import java.text.DecimalFormat;
+
 @Entity
 public class Item
 {
@@ -17,19 +19,28 @@ public class Item
     private String _description;
     @ColumnInfo(name = "cart id")
     private int _cart_id;
+    @ColumnInfo(name = "from currency")
+    private char _fromCurrency;
+    @ColumnInfo(name = "to currency")
+    private char _toCurrency;
 
-    public Item(double originalPrice, double convertedPrice, String description, int cart_id)
+    public Item(double originalPrice, double convertedPrice, String description, int cart_id, char fromCurrency, char toCurrency)
     {
         _originalPrice = originalPrice;
         _convertedPrice = convertedPrice;
         _description = description;
         _cart_id = cart_id;
+        _fromCurrency = fromCurrency;
+        _toCurrency = toCurrency;
     }
 
     @Override
     public String toString()
     {
-        return _description + " " + Double.toString(_originalPrice) + " " + Double.toString(_convertedPrice);
+        String originalPrice = String.format("%.2f", _originalPrice);
+        String convertedPrice = String.format("%.2f", _convertedPrice);
+        return _description + "\n" + "Original: " + originalPrice + Character.toString(_fromCurrency) + "\n" +
+                "Converted: " + convertedPrice + Character.toString(_toCurrency);
     }
 
     public int get_id()
@@ -80,5 +91,25 @@ public class Item
     public void set_cart_id(int _cart_id)
     {
         this._cart_id = _cart_id;
+    }
+
+    public char get_fromCurrency()
+    {
+        return _fromCurrency;
+    }
+
+    public void set_fromCurrency(char _fromCurrency)
+    {
+        this._fromCurrency = _fromCurrency;
+    }
+
+    public char get_toCurrency()
+    {
+        return _toCurrency;
+    }
+
+    public void set_toCurrency(char _toCurrency)
+    {
+        this._toCurrency = _toCurrency;
     }
 }

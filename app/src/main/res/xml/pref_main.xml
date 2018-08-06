@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory android:title="Preferences">
-        <EditTextPreference
-            android:defaultValue="@string/default_gallery_storage"
-            android:key="@string/key_gallery_name"
-            android:summary="@string/default_gallery_storage"
-            android:title="@string/title_gallery_storage" />
- 
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="@string/key_request_description_for_item"
@@ -25,7 +19,6 @@
     <PreferenceCategory android:title="@string/pref_title_currency_conversions">
 
         <ListPreference
-            android:defaultValue="0"
             android:dialogTitle="@string/dialog_title_source_currency"
             android:entries="@array/pref_currency_entries"
             android:entryValues="@array/pref_currency_values"

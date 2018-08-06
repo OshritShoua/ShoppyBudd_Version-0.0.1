@@ -4,12 +4,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/colorBezh"
     tools:context=".CartReviewActivity">
 
     <ListView
         android:id="@+id/_dynamic_item_list"
         android:layout_width="0dp"
-        android:layout_height="339dp"
+        android:layout_height="0dp"
         android:layout_marginBottom="8dp"
         android:layout_marginTop="24dp"
         app:layout_constraintBottom_toTopOf="@+id/scanResults"
@@ -32,15 +33,15 @@
     <TextView
         android:id="@+id/cartNameText"
         android:layout_width="0dp"
-        android:layout_height="31dp"
+        android:layout_height="wrap_content"
         android:layout_marginEnd="24dp"
         android:layout_marginLeft="24dp"
         android:layout_marginRight="24dp"
         android:layout_marginStart="24dp"
         android:layout_marginTop="16dp"
-        android:text="The Cart name will be"
+        android:text="The Cart name will be here"
         android:textAllCaps="false"
-        android:textColor="@android:color/darker_gray"
+        android:textColor="@android:color/holo_red_light"
         android:textColorHighlight="@android:color/holo_blue_dark"
         android:textSize="24sp"
         android:textStyle="bold"
@@ -50,17 +51,40 @@
 
     <TextView
         android:id="@+id/scanResults"
-        android:layout_width="344dp"
+        android:layout_width="0dp"
         android:layout_height="83dp"
         android:layout_marginBottom="8dp"
-        android:layout_marginEnd="8dp"
         android:layout_marginLeft="8dp"
-        android:layout_marginRight="8dp"
         android:layout_marginStart="8dp"
-        android:text="scanResults"
+        android:text="@string/scan_results"
         app:layout_constraintBottom_toTopOf="@+id/cameraButton"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         tools:ignore="MissingConstraints"
-        tools:text="Scan results will be shown here" />
+        tools:text="@string/scan_results" />
+
+    <TextView
+        android:id="@+id/totalSumText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="32dp"
+        android:layout_marginRight="32dp"
+        android:textColor="#c46d2f"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/SumTitleText"
+        tools:text="Sum holder" />
+
+    <TextView
+        android:id="@+id/SumTitleText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Total"
+        android:textColor="#c46d2f"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="@+id/totalSumText"
+        app:layout_constraintTop_toBottomOf="@+id/_dynamic_item_list" />
+
 </android.support.constraint.ConstraintLayout>

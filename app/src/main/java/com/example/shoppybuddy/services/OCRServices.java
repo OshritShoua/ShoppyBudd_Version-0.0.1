@@ -21,7 +21,24 @@ import java.util.HashMap;
 public class OCRServices {
 
     private static final String TAG = "ShoppyBuddy.java";
-    private HashMap<Character, String> _currencySymbolsToCodes;//todo - this might change to a bimap
+    private static HashMap<Character, String> _currencySymbolsToCodes = new HashMap<>(); //todo - this might change to a bimap
+    private static HashMap<String, Character> _currencyCodesToSymbols = new HashMap<>(); //todo - this might change to a bimap
+            static
+            {
+                _currencySymbolsToCodes.put('€', "EUR");
+                _currencySymbolsToCodes.put('₪', "ILS");
+                _currencySymbolsToCodes.put('¥', "JPY");
+                _currencySymbolsToCodes.put('£', "GBP");
+                _currencySymbolsToCodes.put('$', "USD");
+
+
+                _currencyCodesToSymbols.put("EUR", '€');
+                _currencyCodesToSymbols.put("ILS", '₪');
+                _currencyCodesToSymbols.put("JPY", '¥');
+                _currencyCodesToSymbols.put("GBP", '£');
+                _currencyCodesToSymbols.put("USD", '$');
+            }
+
     private String _currentTextCaptured = null;
 
     public String GetCurrentPriceCaptured() {
@@ -41,12 +58,16 @@ public class OCRServices {
 
     private void init()
     {
-        _currencySymbolsToCodes = new HashMap<Character, String>();
-        _currencySymbolsToCodes.put('€', "EUR");
-        _currencySymbolsToCodes.put('₪', "ILS");
-        _currencySymbolsToCodes.put('¥', "JPY");
-        _currencySymbolsToCodes.put('£', "GBP");
-        _currencySymbolsToCodes.put('$', "USD");
+    }
+
+    public static HashMap<Character, String> getSymbolsToCodesMapping()
+    {
+        return _currencySymbolsToCodes;
+    }
+
+    public static HashMap<String, Character> getCodesToSymbolsMapping()
+    {
+        return _currencyCodesToSymbols;
     }
 
     public void GetTextFromCapturedImage(Context appContext, Context context, Uri capturedImageUri)
@@ -116,7 +137,6 @@ public class OCRServices {
                 .openInputStream(uri), null, bmOptions);
     }
 
-//    todo: think of adding some of the actions here to the method from CartReviewActivity
 //    private Bitmap getAdjustedBitmapFromPhoto()
 //    {
 //        BitmapFactory.Options options = new BitmapFactory.Options();

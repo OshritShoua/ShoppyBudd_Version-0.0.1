@@ -14,8 +14,8 @@ import android.util.Log;
 public class RecaptureImageDialogFragment extends DialogFragment
 {
     public interface RecaptureImageDialogListener{
-        public void onRetakeImageClick(DialogFragment dialog);
-        public void onReturnToCartClick(DialogFragment dialog);
+         void onRetakeImageClick(DialogFragment dialog);
+         void onReturnToCartClick(DialogFragment dialog);
     }
 
     // Use this instance of the interface to deliver action events
