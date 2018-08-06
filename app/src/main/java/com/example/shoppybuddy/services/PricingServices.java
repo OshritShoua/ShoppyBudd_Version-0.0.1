@@ -9,6 +9,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -27,11 +28,19 @@ public class PricingServices
     private String _targetCurrencyCode = "ILS";
     private double _euroToBaseCurrencyRate;
     private double _euroToTargetCurrencyRate;
-    private boolean _parsingComplete;
 
     public double GetConvertedPrice() {
         return _convertedPrice;
     }
+
+    public String getBaseCurrencyCode() {
+        return _baseCurrencyCode;
+    }
+
+    public String getTargetCurrencyCode() {
+        return _targetCurrencyCode;
+    }
+
 
     private double _convertedPrice;
 
@@ -131,8 +140,8 @@ public class PricingServices
     {
         double priceInEuros = priceToCalc / _euroToBaseCurrencyRate;
         double priceInTargetCurrency = priceInEuros * _euroToTargetCurrencyRate;
-        _convertedPrice = priceInTargetCurrency;
-        _parsingComplete = true;
+        _convertedPrice = Double.parseDouble(new DecimalFormat("##.##")
+                                .format(priceInTargetCurrency));
     }
 }
 

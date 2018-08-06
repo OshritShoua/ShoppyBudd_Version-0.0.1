@@ -17,12 +17,14 @@ import com.google.common.primitives.Chars;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class OCRServices {
 
     private static final String TAG = "ShoppyBuddy.java";
-    private static HashMap<Character, String> _currencySymbolsToCodes = new HashMap<>(); //todo - this might change to a bimap
-    private static HashMap<String, Character> _currencyCodesToSymbols = new HashMap<>(); //todo - this might change to a bimap
+    private static HashMap<String, Character> _currencyCodesToSymbols = new HashMap<>();
+    private static HashMap<Character, String> _currencySymbolsToCodes = new HashMap<>();
+
             static
             {
                 _currencySymbolsToCodes.put('€', "EUR");
@@ -77,8 +79,8 @@ public class OCRServices {
 
         try {
             Bitmap bitmap = decodeBitmapUri(context, capturedImageUri);
-            //todo: arrange
-            if (textDetector.isOperational() && bitmap != null) {
+            if (textDetector.isOperational() && bitmap != null)
+            {
                 Frame frame = new Frame.Builder().setBitmap(bitmap).build();
                 SparseArray<TextBlock> textBlocks = textDetector.detect(frame);
                 String blocks = "";
@@ -97,22 +99,16 @@ public class OCRServices {
                         }
                     }
                 }
-                if (textBlocks.size() == 0) {
+                if (textBlocks.size() == 0)
+                {
                     _currentTextCaptured = "Scan Failed: Found nothing to scan";
                 } else {
-//                        scanResults.setText(scanResults.getText() + "Blocks: " + "\n");
-//                        scanResults.setText(scanResults.getText() + blocks + "\n");
-//                        scanResults.setText(scanResults.getText() + "---------" + "\n");
-//                        scanResults.setText(scanResults.getText() + "Lines: " + "\n");
-//                        scanResults.setText(scanResults.getText() + lines + "\n");
-//                        scanResults.setText(scanResults.getText() + "---------" + "\n");
-//                        scanResults.setText(scanResults.getText() + "Words: " + "\n");
-//                        scanResults.setText(scanResults.getText() + words + "\n");
-//                        scanResults.setText(scanResults.getText() + "---------" + "\n");
                     _currentTextCaptured = words;
                     System.out.println(words);
                 }
-            } else {
+            }
+            else
+            {
                 _currentTextCaptured = "Could not set up the detector!";
             }
         } catch (Exception e) {
@@ -137,6 +133,7 @@ public class OCRServices {
                 .openInputStream(uri), null, bmOptions);
     }
 
+//    todo: think of adding some of the actions here to the method from CartReviewActivity
 //    private Bitmap getAdjustedBitmapFromPhoto()
 //    {
 //        BitmapFactory.Options options = new BitmapFactory.Options();
@@ -191,34 +188,129 @@ public class OCRServices {
 //        return bitmap;
 //    }
 
-    public boolean parsePriceFromTextSucceeded()
+    public String[] getOCRResult(String baseCurrencyCode)
     {
+        String[] OCRResults = {"99.99"};
+        String text = null;
+        List<String> pricesWithCurrencyInResults = new ArrayList<>();
+        ArrayList<String> pricesInResults = new ArrayList<>();
         String filteredText = getFilteredText(_currentTextCaptured);
-        //todo: implement
-//        String[] results = filteredText.split("X");
-//        for(String res : results)
-//        {
-//            if(res.matches(_currencySymbolsToCodes.keySet().toString()))
-//            {
-//                res.replaceAll(_currencySymbolsToCodes.keySet().toString(), " ");
-//                if(foundPriceInText(res))
-//                {
-//                    filteredText = res;
-//                }
-//            }
-//        }
-//
-//        _currentTextCaptured = filteredText;
-        _currentPriceCaptured = filteredText =  "99.99";
-        if (!foundPriceInText(filteredText)) {
-            filteredText = applyHeuristicsOnText(filteredText);
-            if (!foundPriceInText(filteredText)) {
-                //todo - send message to the user to try and take a picture again, and send him to the camera again
-                return false;
+        String[] results = filteredText.split("[X ]", -1);
+
+        for(String res : results)
+        {
+            if(res.isEmpty())
+            {
+                continue;
+            }
+            else if(res.contains("%"))
+            {
+                continue;
+            }
+
+            String[] isContainCurrencySymbol = res.split(_currencyCodesToSymbols.values().toString(), -1);
+
+            if(isContainCurrencySymbol.length > 1)
+            {
+                String resWithoutCurrency = res.replaceAll(_currencyCodesToSymbols.values().toString(), " ");
+                if(foundPriceInText(resWithoutCurrency))
+                {
+                    pricesWithCurrencyInResults.add(res);
+                }
+            }
+            else if(foundPriceInText(res))
+            {
+                pricesInResults.add(res);
             }
         }
 
-        return true;   //todo - if this is still 'false', change it
+        if(pricesWithCurrencyInResults.size() > 0)
+        {
+            if(pricesWithCurrencyInResults.size() == 1)
+            {
+                text = pricesWithCurrencyInResults.get(0).replaceAll(_currencyCodesToSymbols.values().toString(), " ");;
+            }
+            else
+            {
+                for(String price : pricesWithCurrencyInResults)
+                {
+                    if(price.contains(_currencyCodesToSymbols.get(baseCurrencyCode).toString()))
+                    {
+                        text = price.replaceAll(_currencyCodesToSymbols.values().toString(), " ");
+                        //todo: what if there are two with same currency?
+                        break;
+                    }
+                }
+
+                if(text == null)
+                {
+                    //todo: if there are captured prices but not in the base currency?!
+                }
+            }
+
+        }
+        else
+        {
+            if(pricesInResults.size() == 1)
+            {
+                text = pricesInResults.get(0);
+            }
+            else if(pricesInResults.size() > 0)
+            {
+                int indexInPrice;
+
+                if((indexInPrice = isThereOnlyOneDoubleInPrices(pricesInResults)) != -1)
+                {
+                    text = pricesInResults.get(indexInPrice);
+                }
+                else
+                {
+                    //todo: complete - case with more then one double prices in picture
+                }
+            }
+
+            if(text == null)
+            {
+                // todo: maybe apply heuristics and check again before returning false
+                return OCRResults;
+            }
+        }
+
+        //Health check for all uncovered cases
+        if(text == null)
+        {
+            return OCRResults;
+        }
+
+        _currentPriceCaptured = text;
+
+        return OCRResults;
+    }
+
+    private int isThereOnlyOneDoubleInPrices(ArrayList<String> pricesList)
+    {
+        Object[] priceArray = pricesList.toArray();
+        boolean doublePriceWasFound = false;
+        int result = -1;
+
+        for(int i = 0; i < priceArray.length; i++)
+        {
+            if(((String)priceArray[i]).contains("."))
+            {
+                if(!doublePriceWasFound)
+                {
+                    doublePriceWasFound = true;
+                    result = i;
+                }
+                else
+                {
+                    break;
+                }
+
+            }
+        }
+
+        return result;
     }
 
     @NonNull
@@ -227,7 +319,8 @@ public class OCRServices {
         Log.v(TAG, "OCRED TEXT: " + rawRecognizedText);
 
         rawRecognizedText = rawRecognizedText.trim();
-        ArrayList<Character> whitelist = new ArrayList<>(Chars.asList(Chars.concat(" .1234567890".toCharArray(), Chars.toArray(_currencySymbolsToCodes.keySet()))));
+        ArrayList<Character> whitelist = new ArrayList<>(Chars.asList(Chars.concat(" %.,1234567890".toCharArray(), Chars.toArray(_currencyCodesToSymbols.values()))));
+
         StringBuilder builder = new StringBuilder();
         boolean foundMatch;
         for (char recognizedChar : rawRecognizedText.toCharArray()) {
@@ -247,15 +340,16 @@ public class OCRServices {
         return builder.toString();
     }
 
-    //todo: implement - maybe remove to util class
-    private String applyHeuristicsOnText(String filteredText)
-    {
-        return filteredText;
-    }
+//    //todo: implement - maybe remove to util class
+//    private String applyHeuristicsOnText(String filteredText)
+//    {
+//        return filteredText;
+//    }
 
-    //todo: implement - maybe remove to util class
+    //todo: maybe remove to util class
     private boolean foundPriceInText(String filteredText)
     {
+        //todo: add support in ',' - if more then 2 from right - thousands, else double(.)
         boolean priceWasFound = false;
         try {
             Double.parseDouble(filteredText);

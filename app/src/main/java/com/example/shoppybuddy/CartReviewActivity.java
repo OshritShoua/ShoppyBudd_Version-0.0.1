@@ -89,7 +89,7 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
         });
 
         _db = Room.databaseBuilder(getApplicationContext(), AppDataBase.class, "userShoppings").fallbackToDestructiveMigration().allowMainThreadQueries().build();
-        if(callingActivity.equals(MainActivity.class.getSimpleName())) //todo - add a remark to notes about having had to move the "if else" with the database logic before creating the adapter
+        if(callingActivity.equals(MainActivity.class.getSimpleName()))
         {
             _cart = new Cart(SettingsPrefActivity.get_preferredTargetCurrencySymbol());
             _cart.setId((int)(_db.cartDao().insert(_cart)));
@@ -164,31 +164,6 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
         }
     }
 
-    private void handleCapturedImage()
-    {
-        if (!_ocrServices.parsePriceFromTextSucceeded())
-        {
-            RecaptureImageDialogFragment recaptureImageDialogFragment = new RecaptureImageDialogFragment();
-            recaptureImageDialogFragment.show(getSupportFragmentManager(), "RetakeImage");
-        }
-        else
-        {
-            _originalPrice = Double.parseDouble(_ocrServices.GetCurrentPriceCaptured());
-            _pricingServices.ConvertPrice(_originalPrice);
-            _convertedPrice = _pricingServices.GetConvertedPrice();
-
-            if(SettingsPrefActivity.ShouldRequestItemDescription())
-            {
-                DescriptionDialogFragment itemDescriptionDialogFragment = DescriptionDialogFragment.newInstance("moo", DescriptionDialogFragment.DialogPurpose.itemDescription);
-                itemDescriptionDialogFragment.show(getSupportFragmentManager(), "GetDescription");
-            }
-            else
-            {
-                OnItemDescriptionDone("Item #" + Integer.toString(_cart.GetItems().size() + 1));
-            }
-        }
-    }
-
     public void OnItemDescriptionDone(String description)
     {
         _description = description;
@@ -244,6 +219,15 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
         }
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        if (capturedImageUri != null) {
+            outState.putString(SAVED_INSTANCE_URI, capturedImageUri.toString());
+            outState.putString(SAVED_INSTANCE_RESULT, scanResults.getText().toString());
+        }
+        super.onSaveInstanceState(outState);
+    }
+
     private void takePicture() {
         if(_cart.get_toCurrency() == 0)
         {
@@ -266,12 +250,31 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
         this.sendBroadcast(mediaScanIntent);
     }
 
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        if (capturedImageUri != null) {
-            outState.putString(SAVED_INSTANCE_URI, capturedImageUri.toString());
-            outState.putString(SAVED_INSTANCE_RESULT, scanResults.getText().toString());
+    private void handleCapturedImage()
+    {
+
+        String[] ocrResult = _ocrServices.getOCRResult(_pricingServices.getBaseCurrencyCode());
+        if (ocrResult.length == 0)
+        {
+            RecaptureImageDialogFragment recaptureImageDialogFragment = new RecaptureImageDialogFragment();
+            recaptureImageDialogFragment.show(getSupportFragmentManager(), "RetakeImage");
         }
-        super.onSaveInstanceState(outState);
+        else
+        {
+            //todo :  what if couldn't convert
+            _originalPrice = Double.parseDouble(_ocrServices.GetCurrentPriceCaptured());
+            _pricingServices.ConvertPrice(_originalPrice);
+            _convertedPrice = _pricingServices.GetConvertedPrice();
+
+            if(SettingsPrefActivity.ShouldRequestItemDescription())
+            {
+                DescriptionDialogFragment itemDescriptionDialogFragment = DescriptionDialogFragment.newInstance("moo", DescriptionDialogFragment.DialogPurpose.itemDescription);
+                itemDescriptionDialogFragment.show(getSupportFragmentManager(), "GetDescription");
+            }
+            else
+            {
+                OnItemDescriptionDone("Item #" + Integer.toString(_cart.GetItems().size() + 1));
+            }
+        }
     }
 }
