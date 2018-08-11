@@ -14,6 +14,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Pair;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,9 +30,8 @@ import com.example.shoppybuddy.entities.Item;
 import com.example.shoppybuddy.services.OCRServices;
 import com.example.shoppybuddy.services.PricingServices;
 
-import org.w3c.dom.Text;
-
 import java.io.File;
+import java.util.ArrayList;
 
 public class CartReviewActivity extends AppCompatActivity implements RecaptureImageDialogFragment.RecaptureImageDialogListener, DescriptionDialogFragment.DescriptionDialogListener
 {
@@ -253,8 +253,8 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
     private void handleCapturedImage()
     {
 
-        String[] ocrResult = _ocrServices.getOCRResult(_pricingServices.getBaseCurrencyCode());
-        if (ocrResult.length == 0)
+        Pair<ArrayList<String>, Boolean> ocrResult = _ocrServices.getOCRResult(_pricingServices.getBaseCurrencyCode());
+        if (ocrResult.first.size() == 0)
         {
             RecaptureImageDialogFragment recaptureImageDialogFragment = new RecaptureImageDialogFragment();
             recaptureImageDialogFragment.show(getSupportFragmentManager(), "RetakeImage");
