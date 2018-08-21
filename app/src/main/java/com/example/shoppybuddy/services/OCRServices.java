@@ -6,7 +6,6 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.util.Log;
-import android.util.Pair;
 import android.util.SparseArray;
 
 import com.google.android.gms.vision.Frame;
@@ -14,6 +13,8 @@ import com.google.android.gms.vision.text.Text;
 import com.google.android.gms.vision.text.TextBlock;
 import com.google.android.gms.vision.text.TextRecognizer;
 import com.google.common.primitives.Chars;
+
+import org.apache.commons.lang3.tuple.MutablePair;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ public class OCRServices {
     private static final String TAG = "ShoppyBuddy.java";
     private static HashMap<String, Character> _currencyCodesToSymbols = new HashMap<>();
     private static HashMap<Character, String> _currencySymbolsToCodes = new HashMap<>();
+    private static HashMap<String, String> _similarCurrencyCodes = new HashMap<>();
     private static final int NO_DOUBLE_WERE_FOUND = -1;
     private static final int MORE_THAN_ONE_DOUBLE_WERE_FOUND = -2;
     private static final int UNVALID_INDEX = -1;
@@ -47,6 +49,9 @@ public class OCRServices {
                 _currencyCodesToSymbols.put("JPY", '¥');
                 _currencyCodesToSymbols.put("GBP", '£');
                 _currencyCodesToSymbols.put("USD", '$');
+
+                _similarCurrencyCodes.put("E", "£,€");
+                _similarCurrencyCodes.put("S", "$,");
             }
 
     private String _currentTextCaptured = null;
@@ -109,6 +114,7 @@ public class OCRServices {
                 }
                 if (textBlocks.size() == 0)
                 {
+                    //todo: other value  - send error
                     _currentTextCaptured = "Scan Failed: Found nothing to scan";
                 } else {
                     _currentTextCaptured = words;
@@ -196,16 +202,18 @@ public class OCRServices {
 //        return bitmap;
 //    }
 
-    public Pair<ArrayList<String>, Boolean> getOCRResult(String baseCurrencyCode)
+    public MutablePair<ArrayList<String>, Boolean> getOCRResult(String baseCurrencyCode)
     {
-        Pair<ArrayList<String>, Boolean> OCRResults = new Pair<>(new ArrayList<String>(), false);
+        MutablePair<ArrayList<String>, Boolean> OCRResults = new MutablePair(new ArrayList<String>(), false);
         ArrayList<String> pricesWithCurrencyInResults = new ArrayList<>();
         ArrayList<String> pricesInResults = new ArrayList<>();
         String filteredText = getFilteredText(_currentTextCaptured);
-        List<String> results = Arrays.asList(filteredText.split("[X ]", -1));
+        ArrayList<String> results = new ArrayList<>(Arrays.asList(filteredText.split("[X ]", -1)));
 
-        for(String res : results)
+        for(int i = 0; i < results.size(); i++)
         {
+            String res = results.get(i);
+
             if(res.isEmpty())
             {
                 continue;
@@ -229,14 +237,35 @@ public class OCRServices {
             }
 
             //todo: add hiuristics : search s/e, search $/.. in the res before
-            int resIndex = results.indexOf(res);
-            int currencyIndex;
+            int codeIndex;
+            if((codeIndex = indexOfAny(res, _similarCurrencyCodes.keySet().toString())) != UNVALID_INDEX)
+            {
+                String resWithoutCodes = res.replaceAll(_similarCurrencyCodes.keySet().toString(), " ");
+                if(foundPriceInText(resWithoutCodes)) //Sanity check
+                {
+                   List<String> currencySymbols = Arrays.asList((_similarCurrencyCodes.get(String.valueOf(res.charAt(codeIndex)))).split(",", -1));
+                   for(String currency : currencySymbols)
+                   {
+                       if(currency.isEmpty())
+                       {
+                           continue;
+                       }
 
+                       results.add(res.replace(res.charAt(codeIndex), currency.charAt(0)));
+                   }
+                   OCRResults.setRight(true);
+                }
+                continue;
+            }
+
+            int currencyIndex;
+            int resIndex = results.indexOf(res);
             if(resIndex > 0)
             {
                 if((currencyIndex = indexOfAny(results.get(resIndex -1), _currencyCodesToSymbols.values().toString())) != UNVALID_INDEX && results.get(resIndex -1).length() == 1)
                 {
                     res = results.get(resIndex -1).charAt(currencyIndex) + res;
+                    // todo: OCRResults.second = true;
                 }
             }
 
@@ -258,7 +287,7 @@ public class OCRServices {
         {
             if(pricesWithCurrencyInResults.size() == 1)
             {
-                OCRResults.first.add(pricesWithCurrencyInResults.get(0));
+                OCRResults.getLeft().add(pricesWithCurrencyInResults.get(0));
             }
             else
             {
@@ -266,7 +295,7 @@ public class OCRServices {
                 {
                     for(String price : pricesWithCurrencyInResults)
                     {
-                        OCRResults.first.add(price);
+                        OCRResults.getLeft().add(price);
                     }
                 }
                 else if(numberOfCurrenciesInPrices(pricesWithCurrencyInResults) == pricesWithCurrencyInResults.size())
@@ -274,11 +303,11 @@ public class OCRServices {
                     int index;
                     if(( index =  priceWithBaseCurrencyIndex(pricesWithCurrencyInResults, baseCurrencyCode)) != UNVALID_INDEX)
                     {
-                        OCRResults.first.add(pricesWithCurrencyInResults.get(index));
+                        OCRResults.getLeft().add(pricesWithCurrencyInResults.get(index));
                     }
                     else
                     {
-                        OCRResults.first.add(pricesWithCurrencyInResults.get(0));
+                        OCRResults.getLeft().add(pricesWithCurrencyInResults.get(0));
                     }
                 }
                 else
@@ -290,7 +319,7 @@ public class OCRServices {
                         {
                             if(price.contains(baseCurrencyCode))
                             {
-                                OCRResults.first.add(price);
+                                OCRResults.getLeft().add(price);
                             }
                         }
                     }
@@ -298,7 +327,7 @@ public class OCRServices {
                     {
                         for(String price : pricesWithCurrencyInResults)
                         {
-                            OCRResults.first.add(price);
+                            OCRResults.getLeft().add(price);
                         }
                     }
                 }
@@ -308,7 +337,7 @@ public class OCRServices {
         {
             if(pricesInResults.size() == 1)
             {
-                OCRResults.first.add(pricesInResults.get(0));
+                OCRResults.getLeft().add(pricesInResults.get(0));
             }
             else if(pricesInResults.size() > 0)
             {
@@ -319,7 +348,7 @@ public class OCRServices {
                 {
                     for(String price : pricesInResults)
                     {
-                        OCRResults.first.add(price);
+                        OCRResults.getLeft().add(price);
                     }
                 }
                 //case with more than one double
@@ -329,19 +358,19 @@ public class OCRServices {
                     {
                         if(price.contains("."))
                         {
-                            OCRResults.first.add(price);
+                            OCRResults.getLeft().add(price);
                         }
                     }
                 }
                 //case with just one double
                 else
                 {
-                    OCRResults.first.add(pricesInResults.get(indexInPrices));
+                    OCRResults.getLeft().add(pricesInResults.get(indexInPrices));
                 }
             }
         }
 
-        deleteDuplicateValues(OCRResults.first);
+        deleteDuplicateValues(OCRResults.getLeft());
         _currentPriceCaptured = "99.99";
 
         return OCRResults;
@@ -418,8 +447,9 @@ public class OCRServices {
     {
         Log.v(TAG, "OCRED TEXT: " + rawRecognizedText);
 
+        rawRecognizedText.toUpperCase();
         rawRecognizedText = rawRecognizedText.trim();
-        ArrayList<Character> whitelist = new ArrayList<>(Chars.asList(Chars.concat(" %.,1234567890".toCharArray(), Chars.toArray(_currencyCodesToSymbols.values()))));
+        ArrayList<Character> whitelist = new ArrayList<>(Chars.asList(Chars.concat(" %.,1234567890".toCharArray(), Chars.toArray(_currencyCodesToSymbols.values()), _similarCurrencyCodes.keySet().toString().toCharArray())));
 
         StringBuilder builder = new StringBuilder();
         boolean foundMatch;
