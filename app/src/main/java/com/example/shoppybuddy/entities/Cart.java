@@ -5,6 +5,8 @@ import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.Ignore;
 import android.arch.persistence.room.PrimaryKey;
 
+import com.example.shoppybuddy.services.OCRServices;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -89,6 +91,11 @@ public class Cart
     public void set_toCurrency(char _toCurrency)
     {
         this._toCurrency = _toCurrency;
+    }
+
+    public String get_toCurrencyCode()
+    {
+        return OCRServices.getSymbolsToCodesMapping().get(_toCurrency);
     }
 }
 

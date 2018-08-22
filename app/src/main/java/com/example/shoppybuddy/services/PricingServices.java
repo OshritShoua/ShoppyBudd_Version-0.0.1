@@ -3,7 +3,7 @@ package com.example.shoppybuddy.services;
 import android.os.StrictMode;
 import android.util.Log;
 
-import com.example.shoppybuddy.SettingsPrefActivity;
+import com.example.shoppybuddy.Price;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -52,21 +52,26 @@ public class PricingServices
                 @Query("symbols") String requestedRates);
     }
 
-    public boolean ConvertPrice(double priceToConvert)
+    public List<Price> ConvertPrices(List<Price> pricesToConvert, String targetCurrency)
     {
-        try
+        for(Price price : pricesToConvert)
         {
-            String ratesResponse = getConversionRatesFromApi();
-            parseRatesFromConversionApiResponse(ratesResponse);
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-            return false;
+            _baseCurrencyCode = OCRServices.getSymbolsToCodesMapping().get(price.getCurrencySymbol());
+            _targetCurrencyCode = targetCurrency;
+            try
+            {
+                String ratesResponse = getConversionRatesFromApi();
+                parseRatesFromConversionApiResponse(ratesResponse);
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+
+            calculateConvertedPrice(price);
         }
 
-        calculateConvertedPrice(priceToConvert);
-        return true;
+        return pricesToConvert;
     }
 
     private String getConversionRatesFromApi() throws IOException
@@ -107,12 +112,6 @@ public class PricingServices
             throw new JSONException("bad conversion url response");
         }
 
-        String selectedBaseCurrency = SettingsPrefActivity.get_preferredSourceCurrencyCode();
-        String selectedTargetCurrency = SettingsPrefActivity.get_preferredTargetCurrencyCode();
-        if(selectedBaseCurrency != null)
-            _baseCurrencyCode = selectedBaseCurrency;
-        if(selectedTargetCurrency != null)
-            _targetCurrencyCode = selectedTargetCurrency;
         double euroToBaseCurrencyRate = -1;
         double euroToTargetCurrencyRate = -1;
         JSONObject currencyCodesToRates = json.getJSONObject("rates");
@@ -136,12 +135,12 @@ public class PricingServices
         _euroToTargetCurrencyRate = euroToTargetCurrencyRate;
     }
 
-    private void calculateConvertedPrice(double priceToCalc)
+    private void calculateConvertedPrice(Price price)
     {
-        double priceInEuros = priceToCalc / _euroToBaseCurrencyRate;
+        double priceInEuros = price.getOriginalAmount() / _euroToBaseCurrencyRate;
         double priceInTargetCurrency = priceInEuros * _euroToTargetCurrencyRate;
-        _convertedPrice = Double.parseDouble(new DecimalFormat("##.##")
-                                .format(priceInTargetCurrency));
+        price.setConvertedAmount(Double.parseDouble(new DecimalFormat("##.##")
+                .format(priceInTargetCurrency)));
     }
 }
 

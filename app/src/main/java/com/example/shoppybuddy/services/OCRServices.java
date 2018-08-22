@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.util.Log;
+import android.util.Pair;
 import android.util.SparseArray;
 
 import com.google.android.gms.vision.Frame;
@@ -16,6 +17,7 @@ import com.google.common.primitives.Chars;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -188,103 +190,104 @@ public class OCRServices {
 //        return bitmap;
 //    }
 
-    public String[] getOCRResult(String baseCurrencyCode)
+    public Pair<List<String>, Boolean> getOCRResult(String baseCurrencyCode)
     {
-        String[] OCRResults = {"99.99"};
-        String text = null;
-        List<String> pricesWithCurrencyInResults = new ArrayList<>();
-        ArrayList<String> pricesInResults = new ArrayList<>();
-        String filteredText = getFilteredText(_currentTextCaptured);
-        String[] results = filteredText.split("[X ]", -1);
-
-        for(String res : results)
-        {
-            if(res.isEmpty())
-            {
-                continue;
-            }
-            else if(res.contains("%"))
-            {
-                continue;
-            }
-
-            String[] isContainCurrencySymbol = res.split(_currencyCodesToSymbols.values().toString(), -1);
-
-            if(isContainCurrencySymbol.length > 1)
-            {
-                String resWithoutCurrency = res.replaceAll(_currencyCodesToSymbols.values().toString(), " ");
-                if(foundPriceInText(resWithoutCurrency))
-                {
-                    pricesWithCurrencyInResults.add(res);
-                }
-            }
-            else if(foundPriceInText(res))
-            {
-                pricesInResults.add(res);
-            }
-        }
-
-        if(pricesWithCurrencyInResults.size() > 0)
-        {
-            if(pricesWithCurrencyInResults.size() == 1)
-            {
-                text = pricesWithCurrencyInResults.get(0).replaceAll(_currencyCodesToSymbols.values().toString(), " ");;
-            }
-            else
-            {
-                for(String price : pricesWithCurrencyInResults)
-                {
-                    if(price.contains(_currencyCodesToSymbols.get(baseCurrencyCode).toString()))
-                    {
-                        text = price.replaceAll(_currencyCodesToSymbols.values().toString(), " ");
-                        //todo: what if there are two with same currency?
-                        break;
-                    }
-                }
-
-                if(text == null)
-                {
-                    //todo: if there are captured prices but not in the base currency?!
-                }
-            }
-
-        }
-        else
-        {
-            if(pricesInResults.size() == 1)
-            {
-                text = pricesInResults.get(0);
-            }
-            else if(pricesInResults.size() > 0)
-            {
-                int indexInPrice;
-
-                if((indexInPrice = isThereOnlyOneDoubleInPrices(pricesInResults)) != -1)
-                {
-                    text = pricesInResults.get(indexInPrice);
-                }
-                else
-                {
-                    //todo: complete - case with more then one double prices in picture
-                }
-            }
-
-            if(text == null)
-            {
-                // todo: maybe apply heuristics and check again before returning false
-                return OCRResults;
-            }
-        }
-
-        //Health check for all uncovered cases
-        if(text == null)
-        {
-            return OCRResults;
-        }
-
-        _currentPriceCaptured = text;
-
-        return OCRResults;
+        return new Pair<>(Arrays.asList("-99.99"), true);//, "X87.45", "X50.00"
+//        String[] OCRResults = {"99.99"};
+//        String text = null;
+//        List<String> pricesWithCurrencyInResults = new ArrayList<>();
+//        ArrayList<String> pricesInResults = new ArrayList<>();
+//        String filteredText = getFilteredText(_currentTextCaptured);
+//        String[] results = filteredText.split("[X ]", -1);
+//
+//        for(String res : results)
+//        {
+//            if(res.isEmpty())
+//            {
+//                continue;
+//            }
+//            else if(res.contains("%"))
+//            {
+//                continue;
+//            }
+//
+//            String[] isContainCurrencySymbol = res.split(_currencyCodesToSymbols.values().toString(), -1);
+//
+//            if(isContainCurrencySymbol.length > 1)
+//            {
+//                String resWithoutCurrency = res.replaceAll(_currencyCodesToSymbols.values().toString(), " ");
+//                if(foundPriceInText(resWithoutCurrency))
+//                {
+//                    pricesWithCurrencyInResults.add(res);
+//                }
+//            }
+//            else if(foundPriceInText(res))
+//            {
+//                pricesInResults.add(res);
+//            }
+//        }
+//
+//        if(pricesWithCurrencyInResults.size() > 0)
+//        {
+//            if(pricesWithCurrencyInResults.size() == 1)
+//            {
+//                text = pricesWithCurrencyInResults.get(0).replaceAll(_currencyCodesToSymbols.values().toString(), " ");;
+//            }
+//            else
+//            {
+//                for(String price : pricesWithCurrencyInResults)
+//                {
+//                    if(price.contains(_currencyCodesToSymbols.get(baseCurrencyCode).toString()))
+//                    {
+//                        text = price.replaceAll(_currencyCodesToSymbols.values().toString(), " ");
+//                        //todo: what if there are two with same currency?
+//                        break;
+//                    }
+//                }
+//
+//                if(text == null)
+//                {
+//                    //todo: if there are captured prices but not in the base currency?!
+//                }
+//            }
+//
+//        }
+//        else
+//        {
+//            if(pricesInResults.size() == 1)
+//            {
+//                text = pricesInResults.get(0);
+//            }
+//            else if(pricesInResults.size() > 0)
+//            {
+//                int indexInPrice;
+//
+//                if((indexInPrice = isThereOnlyOneDoubleInPrices(pricesInResults)) != -1)
+//                {
+//                    text = pricesInResults.get(indexInPrice);
+//                }
+//                else
+//                {
+//                    //todo: complete - case with more then one double prices in picture
+//                }
+//            }
+//
+//            if(text == null)
+//            {
+//                // todo: maybe apply heuristics and check again before returning false
+//                return OCRResults;
+//            }
+//        }
+//
+//        //Health check for all uncovered cases
+//        if(text == null)
+//        {
+//            return OCRResults;
+//        }
+//
+//        _currentPriceCaptured = text;
+//
+//        return OCRResults;
     }
 
     private int isThereOnlyOneDoubleInPrices(ArrayList<String> pricesList)

@@ -8,12 +8,14 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Looper;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Pair;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,11 +31,13 @@ import com.example.shoppybuddy.entities.Item;
 import com.example.shoppybuddy.services.OCRServices;
 import com.example.shoppybuddy.services.PricingServices;
 
-import org.w3c.dom.Text;
-
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-public class CartReviewActivity extends AppCompatActivity implements RecaptureImageDialogFragment.RecaptureImageDialogListener, DescriptionDialogFragment.DescriptionDialogListener
+public class CartReviewActivity extends AppCompatActivity implements RecaptureImageDialogFragment.RecaptureImageDialogListener, DescriptionDialogFragment.DescriptionDialogListener,
+        PriceSelectionDialogFragment.PriceSelectionDialogListener
 {
     private static final int REQUEST_IMAGE_CAPTURE = 10;
     private static final int REQUEST_WRITE_PERMISSION = 20;
@@ -44,11 +48,9 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
     private OCRServices _ocrServices;
 
     private Cart _cart;
-    private double _originalPrice;
-    private double _convertedPrice;
-    private String _description;
+    private double _originalAmount;
+    private double _convertedAmount;
     private AppDataBase _db;
-
     private Uri capturedImageUri;
     private TextView scanResults;
 
@@ -60,19 +62,21 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
         {
             _cart.set_toCurrency(SettingsPrefActivity.get_preferredTargetCurrencySymbol());
             _db.cartDao().updateCart(_cart);
-            UpdateSumUI();
         }
+
+        InitializeItemListView();
+        UpdateSumUI();
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cart_review);
-        scanResults = findViewById(R.id.scanResults);
-        if (savedInstanceState != null) {
-            capturedImageUri = Uri.parse(savedInstanceState.getString(SAVED_INSTANCE_URI));
-            scanResults.setText(savedInstanceState.getString(SAVED_INSTANCE_RESULT));
-        }
+//        scanResults = findViewById(R.id.scanResults);
+//        if (savedInstanceState != null) {
+//            capturedImageUri = Uri.parse(savedInstanceState.getString(SAVED_INSTANCE_URI));
+//            scanResults.setText(savedInstanceState.getString(SAVED_INSTANCE_RESULT));
+//        }
 
         initComponents(getIntent().getStringExtra("calling activity"));
     }
@@ -87,19 +91,17 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
                         String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA}, REQUEST_WRITE_PERMISSION);
             }
         });
-
+        _cart = new Cart(SettingsPrefActivity.get_preferredTargetCurrencySymbol());
         _db = Room.databaseBuilder(getApplicationContext(), AppDataBase.class, "userShoppings").fallbackToDestructiveMigration().allowMainThreadQueries().build();
         if(callingActivity.equals(MainActivity.class.getSimpleName()))
         {
-            _cart = new Cart(SettingsPrefActivity.get_preferredTargetCurrencySymbol());
-            _cart.setId((int)(_db.cartDao().insert(_cart)));
             if(SettingsPrefActivity.ShouldRequestCartDescription())
             {
                 DescriptionDialogFragment cartDescriptionDialogFragment = DescriptionDialogFragment.newInstance("moo", DescriptionDialogFragment.DialogPurpose.cartDescription);
                 cartDescriptionDialogFragment.show(getSupportFragmentManager(), "GetDescription");
             }
             else
-                OnCartDescriptionDone("My shopping cart #" + Integer.toString(_cart.getId() + 1));
+                OnCartDescriptionDone(null);
         }
         else
         {
@@ -115,8 +117,6 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
         }
 
         _pricingServices = new PricingServices();
-        InitializeItemListView();
-        UpdateSumUI();
         _ocrServices = new OCRServices();
     }
 
@@ -159,17 +159,20 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             launchMediaScanIntent();
             _ocrServices.GetTextFromCapturedImage(getApplicationContext(), this, capturedImageUri);
-            scanResults.setText(_ocrServices.GetCurrentTextCaptured());
+            //scanResults.setText(_ocrServices.GetCurrentTextCaptured());
             handleCapturedImage();
         }
     }
 
     public void OnItemDescriptionDone(String description)
     {
-        _description = description;
-        Item item = new Item(_originalPrice, _convertedPrice, _description, _cart.getId(),
-                SettingsPrefActivity.get_preferredSourceCurrencySymbol(), SettingsPrefActivity.get_preferredTargetCurrencySymbol());
+        boolean isUIThread = Looper.myLooper() == Looper.getMainLooper();
+        Item item = new Item(_originalAmount, _convertedAmount, description, _cart.getId(),
+                SettingsPrefActivity.get_preferredSourceCurrencySymbol(), _cart.get_toCurrency());
         _cart.AddItem(item);
+        ListView view = (ListView)findViewById(R.id._dynamic_item_list);
+        ArrayAdapter adapter = (ArrayAdapter<Item>)view.getAdapter();
+        adapter.notifyDataSetChanged();
         _db.itemDao().insertAll(item);
         _db.cartDao().updateCart(_cart);
         UpdateSumUI();
@@ -178,6 +181,10 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
     @Override
     public void OnCartDescriptionDone(String description)
     {
+        _cart.setId((int)(_db.cartDao().insert(_cart)));
+        if(description == null)
+            description = "My shopping cart #" + Integer.toString(_cart.getId() + 1);
+
         _cart.set_description(description);
         _db.cartDao().updateCart(_cart);
         UpdateCartNameTextView(description);
@@ -221,15 +228,15 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        if (capturedImageUri != null) {
-            outState.putString(SAVED_INSTANCE_URI, capturedImageUri.toString());
-            outState.putString(SAVED_INSTANCE_RESULT, scanResults.getText().toString());
-        }
+//        if (capturedImageUri != null) {
+//            outState.putString(SAVED_INSTANCE_URI, capturedImageUri.toString());
+//            outState.putString(SAVED_INSTANCE_RESULT, scanResults.getText().toString());
+//        }
         super.onSaveInstanceState(outState);
     }
 
     private void takePicture() {
-        if(_cart.get_toCurrency() == 0)
+        if(_cart.get_toCurrency() == 0 || SettingsPrefActivity.get_preferredSourceCurrencySymbol() == 0)
         {
             CurrencyNotSelectedDialogFragment fragment = new CurrencyNotSelectedDialogFragment();
             fragment.show(getSupportFragmentManager(), "Select currency");
@@ -252,9 +259,8 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
 
     private void handleCapturedImage()
     {
-
-        String[] ocrResult = _ocrServices.getOCRResult(_pricingServices.getBaseCurrencyCode());
-        if (ocrResult.length == 0)
+        Pair<List<String>, Boolean> ocrResults = _ocrServices.getOCRResult(_pricingServices.getBaseCurrencyCode());
+        if (ocrResults.first.size() == 0)
         {
             RecaptureImageDialogFragment recaptureImageDialogFragment = new RecaptureImageDialogFragment();
             recaptureImageDialogFragment.show(getSupportFragmentManager(), "RetakeImage");
@@ -262,19 +268,68 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
         else
         {
             //todo :  what if couldn't convert
-            _originalPrice = Double.parseDouble(_ocrServices.GetCurrentPriceCaptured());
-            _pricingServices.ConvertPrice(_originalPrice);
-            _convertedPrice = _pricingServices.GetConvertedPrice();
+            List<Price> prices = getPricesFromOcrResults(ocrResults.first);
+            interactWithUserIfNeededAndDeterminePrice(prices, ocrResults.second);
+        }
+    }
 
-            if(SettingsPrefActivity.ShouldRequestItemDescription())
+    private void interactWithUserIfNeededAndDeterminePrice(List<Price> prices, Boolean foundWithHeuristics)
+    {
+        if(prices.size() == 1)
+        {
+            if(!foundWithHeuristics)
             {
-                DescriptionDialogFragment itemDescriptionDialogFragment = DescriptionDialogFragment.newInstance("moo", DescriptionDialogFragment.DialogPurpose.itemDescription);
-                itemDescriptionDialogFragment.show(getSupportFragmentManager(), "GetDescription");
+                OnPriceSelected(prices.get(0));
             }
             else
             {
-                OnItemDescriptionDone("Item #" + Integer.toString(_cart.GetItems().size() + 1));
+                PriceSelectionDialogFragment priceSelectionDialogFragment = PriceSelectionDialogFragment.newInstance(prices, "ConfirmPrice");
+                priceSelectionDialogFragment.show(getSupportFragmentManager(), "ConfirmPrice");
             }
+        }
+        else
+        {
+            PriceSelectionDialogFragment priceSelectionDialogFragment = PriceSelectionDialogFragment.newInstance(prices, "SelectPrice");
+            priceSelectionDialogFragment.show(getSupportFragmentManager(),"SelectPrice");
+        }
+    }
+
+    private List<Price> getPricesFromOcrResults(List<String> identifiedPrices)
+    {
+        ArrayList<Price> res = new ArrayList<>();
+        for(String currencyAndAmount : identifiedPrices)
+        {
+            if(currencyAndAmount.charAt(0) != '-')
+                res.add(new Price(Double.parseDouble(currencyAndAmount.substring(1)), currencyAndAmount.charAt(0)));
+            else
+                res.add(new Price(Double.parseDouble(currencyAndAmount.substring(1)), SettingsPrefActivity.get_preferredSourceCurrencySymbol()));
+        }
+
+        return res;
+    }
+
+    @Override
+    public void OnRetakeImageClick(DialogFragment dialog)
+    {
+        takePicture();
+    }
+
+    @Override
+    public void OnPriceSelected(Price price)
+    {   //todo - not important...but should change this to passing on the price to the dialogs.
+        _pricingServices.ConvertPrices(Arrays.asList(price), _cart.get_toCurrencyCode());
+        _originalAmount = price.getOriginalAmount();
+        _convertedAmount = price.getConvertedAmount();
+
+        if(SettingsPrefActivity.ShouldRequestItemDescription())
+        {
+            DescriptionDialogFragment itemDescriptionDialogFragment = DescriptionDialogFragment.newInstance("moo", DescriptionDialogFragment.DialogPurpose.itemDescription);
+            itemDescriptionDialogFragment.show(getSupportFragmentManager(), "GetDescription");
+        }
+        else
+        {
+            OnItemDescriptionDone("Item #" + Integer.toString(_cart.GetItems().size() + 1));
         }
     }
 }
+
