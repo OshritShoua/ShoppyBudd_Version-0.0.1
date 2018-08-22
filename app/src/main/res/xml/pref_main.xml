@@ -22,6 +22,7 @@
             android:dialogTitle="@string/dialog_title_source_currency"
             android:entries="@array/pref_currency_entries"
             android:entryValues="@array/pref_currency_values"
+            android:summary="@string/summary_source_currency"
             android:key="@string/key_source_currency"
             android:title="@string/title_source_currency" />
 
@@ -29,6 +30,7 @@
             android:dialogTitle="@string/dialog_title_target_currency"
             android:entries="@array/pref_currency_entries"
             android:entryValues="@array/pref_currency_values"
+            android:summary="@string/summary_target_currency"
             android:key="@string/key_target_currency"
             android:title="@string/title_target_currency" />
     </PreferenceCategory>
