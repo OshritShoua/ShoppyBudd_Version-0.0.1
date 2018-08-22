@@ -14,16 +14,26 @@ import com.google.android.gms.vision.text.TextBlock;
 import com.google.android.gms.vision.text.TextRecognizer;
 import com.google.common.primitives.Chars;
 
+import org.apache.commons.lang3.tuple.MutablePair;
+
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class OCRServices {
 
     private static final String TAG = "ShoppyBuddy.java";
     private static HashMap<String, Character> _currencyCodesToSymbols = new HashMap<>();
     private static HashMap<Character, String> _currencySymbolsToCodes = new HashMap<>();
+    private static HashMap<String, String> _similarCurrencyCodes = new HashMap<>();
+    private static final int NO_DOUBLE_WERE_FOUND = -1;
+    private static final int MORE_THAN_ONE_DOUBLE_WERE_FOUND = -2;
+    private static final int UNVALID_INDEX = -1;
+
 
             static
             {
@@ -39,6 +49,9 @@ public class OCRServices {
                 _currencyCodesToSymbols.put("JPY", '¥');
                 _currencyCodesToSymbols.put("GBP", '£');
                 _currencyCodesToSymbols.put("USD", '$');
+
+                _similarCurrencyCodes.put("E", "£,€");
+                _similarCurrencyCodes.put("S", "$,");
             }
 
     private String _currentTextCaptured = null;
@@ -101,6 +114,7 @@ public class OCRServices {
                 }
                 if (textBlocks.size() == 0)
                 {
+                    //todo: other value  - send error
                     _currentTextCaptured = "Scan Failed: Found nothing to scan";
                 } else {
                     _currentTextCaptured = words;
@@ -188,17 +202,18 @@ public class OCRServices {
 //        return bitmap;
 //    }
 
-    public String[] getOCRResult(String baseCurrencyCode)
+    public MutablePair<ArrayList<String>, Boolean> getOCRResult(String baseCurrencyCode)
     {
-        String[] OCRResults = {"99.99"};
-        String text = null;
-        List<String> pricesWithCurrencyInResults = new ArrayList<>();
+        MutablePair<ArrayList<String>, Boolean> OCRResults = new MutablePair(new ArrayList<String>(), false);
+        ArrayList<String> pricesWithCurrencyInResults = new ArrayList<>();
         ArrayList<String> pricesInResults = new ArrayList<>();
         String filteredText = getFilteredText(_currentTextCaptured);
-        String[] results = filteredText.split("[X ]", -1);
+        ArrayList<String> results = new ArrayList<>(Arrays.asList(filteredText.split("[X ]", -1)));
 
-        for(String res : results)
+        for(int i = 0; i < results.size(); i++)
         {
+            String res = results.get(i);
+
             if(res.isEmpty())
             {
                 continue;
@@ -208,14 +223,58 @@ public class OCRServices {
                 continue;
             }
 
-            String[] isContainCurrencySymbol = res.split(_currencyCodesToSymbols.values().toString(), -1);
+            // ',' - if more than 2 from right - thousands, else double(.)
+            if(res.contains(","))
+            {
+                if(numberOfDigitsRightToComma(res) == 2)
+                {
+                    res = res.replace(",", ".");
+                }
+                else
+                {
+                    res = res.replace(",", "");
+                }
+            }
 
-            if(isContainCurrencySymbol.length > 1)
+            //todo: add hiuristics : search s/e, search $/.. in the res before
+            int codeIndex;
+            if((codeIndex = indexOfAny(res, _similarCurrencyCodes.keySet().toString())) != UNVALID_INDEX)
+            {
+                String resWithoutCodes = res.replaceAll(_similarCurrencyCodes.keySet().toString(), " ");
+                if(foundPriceInText(resWithoutCodes)) //Sanity check
+                {
+                   List<String> currencySymbols = Arrays.asList((_similarCurrencyCodes.get(String.valueOf(res.charAt(codeIndex)))).split(",", -1));
+                   for(String currency : currencySymbols)
+                   {
+                       if(currency.isEmpty())
+                       {
+                           continue;
+                       }
+
+                       results.add(res.replace(res.charAt(codeIndex), currency.charAt(0)));
+                   }
+                   OCRResults.setRight(true);
+                }
+                continue;
+            }
+
+            int currencyIndex;
+            int resIndex = results.indexOf(res);
+            if(resIndex > 0)
+            {
+                if((currencyIndex = indexOfAny(results.get(resIndex -1), _currencyCodesToSymbols.values().toString())) != UNVALID_INDEX && results.get(resIndex -1).length() == 1)
+                {
+                    res = results.get(resIndex -1).charAt(currencyIndex) + res;
+                    // todo: OCRResults.second = true;
+                }
+            }
+
+            if((currencyIndex = indexOfAny(res, _currencyCodesToSymbols.values().toString())) != UNVALID_INDEX)
             {
                 String resWithoutCurrency = res.replaceAll(_currencyCodesToSymbols.values().toString(), " ");
-                if(foundPriceInText(resWithoutCurrency))
+                if(foundPriceInText(resWithoutCurrency)) //Sanity check
                 {
-                    pricesWithCurrencyInResults.add(res);
+                    pricesWithCurrencyInResults.add(res.charAt(currencyIndex) + resWithoutCurrency);
                 }
             }
             else if(foundPriceInText(res))
@@ -228,70 +287,139 @@ public class OCRServices {
         {
             if(pricesWithCurrencyInResults.size() == 1)
             {
-                text = pricesWithCurrencyInResults.get(0).replaceAll(_currencyCodesToSymbols.values().toString(), " ");;
+                OCRResults.getLeft().add(pricesWithCurrencyInResults.get(0));
             }
             else
             {
-                for(String price : pricesWithCurrencyInResults)
+                if(numberOfCurrenciesInPrices(pricesWithCurrencyInResults) == 1)
                 {
-                    if(price.contains(_currencyCodesToSymbols.get(baseCurrencyCode).toString()))
+                    for(String price : pricesWithCurrencyInResults)
                     {
-                        text = price.replaceAll(_currencyCodesToSymbols.values().toString(), " ");
-                        //todo: what if there are two with same currency?
-                        break;
+                        OCRResults.getLeft().add(price);
                     }
                 }
-
-                if(text == null)
+                else if(numberOfCurrenciesInPrices(pricesWithCurrencyInResults) == pricesWithCurrencyInResults.size())
                 {
-                    //todo: if there are captured prices but not in the base currency?!
+                    int index;
+                    if(( index =  priceWithBaseCurrencyIndex(pricesWithCurrencyInResults, baseCurrencyCode)) != UNVALID_INDEX)
+                    {
+                        OCRResults.getLeft().add(pricesWithCurrencyInResults.get(index));
+                    }
+                    else
+                    {
+                        OCRResults.getLeft().add(pricesWithCurrencyInResults.get(0));
+                    }
+                }
+                else
+                {
+                    int index;
+                    if(( index =  priceWithBaseCurrencyIndex(pricesWithCurrencyInResults, baseCurrencyCode)) != UNVALID_INDEX)
+                    {
+                        for(String price : pricesWithCurrencyInResults)
+                        {
+                            if(price.contains(baseCurrencyCode))
+                            {
+                                OCRResults.getLeft().add(price);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        for(String price : pricesWithCurrencyInResults)
+                        {
+                            OCRResults.getLeft().add(price);
+                        }
+                    }
                 }
             }
-
         }
         else
         {
             if(pricesInResults.size() == 1)
             {
-                text = pricesInResults.get(0);
+                OCRResults.getLeft().add(pricesInResults.get(0));
             }
             else if(pricesInResults.size() > 0)
             {
-                int indexInPrice;
+                int indexInPrices = isThereOnlyOneDoubleInPrices(pricesInResults);
 
-                if((indexInPrice = isThereOnlyOneDoubleInPrices(pricesInResults)) != -1)
+                //case with no doubles
+                if(indexInPrices == NO_DOUBLE_WERE_FOUND)
                 {
-                    text = pricesInResults.get(indexInPrice);
+                    for(String price : pricesInResults)
+                    {
+                        OCRResults.getLeft().add(price);
+                    }
                 }
+                //case with more than one double
+                else if(indexInPrices == MORE_THAN_ONE_DOUBLE_WERE_FOUND)
+                {
+                    for(String price : pricesInResults)
+                    {
+                        if(price.contains("."))
+                        {
+                            OCRResults.getLeft().add(price);
+                        }
+                    }
+                }
+                //case with just one double
                 else
                 {
-                    //todo: complete - case with more then one double prices in picture
+                    OCRResults.getLeft().add(pricesInResults.get(indexInPrices));
                 }
             }
+        }
 
-            if(text == null)
+        deleteDuplicateValues(OCRResults.getLeft());
+        _currentPriceCaptured = "99.99";
+
+        return OCRResults;
+    }
+
+    private int priceWithBaseCurrencyIndex(ArrayList<String> prices, String baseCurrency)
+    {
+        int result = UNVALID_INDEX;
+
+        for(String price : prices)
+        {
+            if(price.contains(baseCurrency))
             {
-                // todo: maybe apply heuristics and check again before returning false
-                return OCRResults;
+                return prices.indexOf(price);
             }
         }
 
-        //Health check for all uncovered cases
-        if(text == null)
+        return result;
+    }
+
+    private void deleteDuplicateValues(ArrayList<String> prices)
+    {
+        // add elements to hs, including duplicates
+        Set<String> hs = new HashSet<>();
+        hs.addAll(prices);
+        prices.clear();
+        prices.addAll(hs);
+    }
+
+    private int numberOfCurrenciesInPrices(ArrayList<String> prices)
+    {
+        StringBuilder foundedCurrencies = new StringBuilder();
+
+        for(String price : prices)
         {
-            return OCRResults;
+            if(foundedCurrencies.toString().indexOf(price.charAt(0)) == UNVALID_INDEX)
+            {
+                foundedCurrencies.append(price.charAt(0));
+            }
         }
 
-        _currentPriceCaptured = text;
-
-        return OCRResults;
+        return foundedCurrencies.length();
     }
 
     private int isThereOnlyOneDoubleInPrices(ArrayList<String> pricesList)
     {
         Object[] priceArray = pricesList.toArray();
         boolean doublePriceWasFound = false;
-        int result = -1;
+        int result = NO_DOUBLE_WERE_FOUND;
 
         for(int i = 0; i < priceArray.length; i++)
         {
@@ -304,12 +432,13 @@ public class OCRServices {
                 }
                 else
                 {
+                    result = MORE_THAN_ONE_DOUBLE_WERE_FOUND;
                     break;
                 }
-
             }
         }
 
+        //return values mean: -1: double was not founded, -2: there are more than one double
         return result;
     }
 
@@ -318,8 +447,9 @@ public class OCRServices {
     {
         Log.v(TAG, "OCRED TEXT: " + rawRecognizedText);
 
+        rawRecognizedText.toUpperCase();
         rawRecognizedText = rawRecognizedText.trim();
-        ArrayList<Character> whitelist = new ArrayList<>(Chars.asList(Chars.concat(" %.,1234567890".toCharArray(), Chars.toArray(_currencyCodesToSymbols.values()))));
+        ArrayList<Character> whitelist = new ArrayList<>(Chars.asList(Chars.concat(" %.,1234567890".toCharArray(), Chars.toArray(_currencyCodesToSymbols.values()), _similarCurrencyCodes.keySet().toString().toCharArray())));
 
         StringBuilder builder = new StringBuilder();
         boolean foundMatch;
@@ -340,7 +470,7 @@ public class OCRServices {
         return builder.toString();
     }
 
-//    //todo: implement - maybe remove to util class
+//    //todo: implement
 //    private String applyHeuristicsOnText(String filteredText)
 //    {
 //        return filteredText;
@@ -349,8 +479,8 @@ public class OCRServices {
     //todo: maybe remove to util class
     private boolean foundPriceInText(String filteredText)
     {
-        //todo: add support in ',' - if more then 2 from right - thousands, else double(.)
         boolean priceWasFound = false;
+
         try {
             Double.parseDouble(filteredText);
             priceWasFound = true;
@@ -360,5 +490,43 @@ public class OCRServices {
         }
 
         return priceWasFound;
+    }
+
+    //todo: maybe remove to util class
+    private int numberOfDigitsRightToComma(String text)
+    {
+        int digitsCounter = 0;
+        int i = text.indexOf(",") + 1;
+
+        for(; i < text.length(); i++)
+        {
+            digitsCounter++;
+        }
+
+        return digitsCounter;
+    }
+
+    //todo: maybe remove to util class
+    private static int indexOfAny(String str, String searchChars) {
+        if (isEmpty(str) || isEmpty(searchChars)){
+            return UNVALID_INDEX;
+        }
+        for (int i = 0; i < str.length(); i++) {
+            char ch = str.charAt(i);
+            for (int j = 0; j < searchChars.length(); j++) {
+                if (searchChars.charAt(j) == ch) {
+                    return i;
+                }
+            }
+        }
+        return UNVALID_INDEX;
+    }
+
+    //todo: maybe remove to util class
+    private static boolean isEmpty(String array) {
+        if (array == null || array.length() == 0) {
+            return true;
+        }
+        return false;
     }
 }

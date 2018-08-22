@@ -29,9 +29,10 @@ import com.example.shoppybuddy.entities.Item;
 import com.example.shoppybuddy.services.OCRServices;
 import com.example.shoppybuddy.services.PricingServices;
 
-import org.w3c.dom.Text;
+import org.apache.commons.lang3.tuple.MutablePair;
 
 import java.io.File;
+import java.util.ArrayList;
 
 public class CartReviewActivity extends AppCompatActivity implements RecaptureImageDialogFragment.RecaptureImageDialogListener, DescriptionDialogFragment.DescriptionDialogListener
 {
@@ -253,8 +254,8 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
     private void handleCapturedImage()
     {
 
-        String[] ocrResult = _ocrServices.getOCRResult(_pricingServices.getBaseCurrencyCode());
-        if (ocrResult.length == 0)
+        MutablePair<ArrayList<String>, Boolean> ocrResult = _ocrServices.getOCRResult(_pricingServices.getBaseCurrencyCode());
+        if (ocrResult.getLeft().size() == 0)
         {
             RecaptureImageDialogFragment recaptureImageDialogFragment = new RecaptureImageDialogFragment();
             recaptureImageDialogFragment.show(getSupportFragmentManager(), "RetakeImage");
