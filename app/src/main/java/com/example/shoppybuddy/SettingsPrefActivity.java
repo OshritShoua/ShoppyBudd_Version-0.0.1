@@ -1,17 +1,10 @@
 package com.example.shoppybuddy;
 
 import android.content.SharedPreferences;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
-import android.net.Uri;
 import android.os.Bundle;
-import android.preference.EditTextPreference;
-import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
-import android.preference.RingtonePreference;
-import android.text.TextUtils;
 import android.view.MenuItem;
 
 import com.example.shoppybuddy.services.OCRServices;
@@ -24,6 +17,8 @@ public class SettingsPrefActivity extends AppCompatPreferenceActivity {
     private static char _preferredSourceCurrencySymbol;
     private static String _preferredTargetCurrencyCode = "";
     private static char _preferredTargetCurrencySymbol;
+    private static String _sourceSummary;
+    private static String _targetSummary;
 
     public static boolean ShouldRequestItemDescription()
     {
@@ -81,22 +76,24 @@ public class SettingsPrefActivity extends AppCompatPreferenceActivity {
     }
 
     public static class MainPreferenceFragment extends PreferenceFragment {
+
         @Override
         public void onCreate(final Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.pref_main);
-
             findPreference(getString(R.string.key_request_description_for_item)).setOnPreferenceChangeListener(_prefChangeListener);
             findPreference(getString(R.string.key_request_description_for_cart)).setOnPreferenceChangeListener(_prefChangeListener);
             SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
             String sourceCurrency = sharedPreferences.getString(getString(R.string.key_source_currency), "" );
             String targetCurrency = sharedPreferences.getString(getString(R.string.key_target_currency), "" );
+            _sourceSummary = getString(R.string.summary_source_currency);
+            _targetSummary = getString(R.string.summary_target_currency);
             Preference sourceCurrencyPref = findPreference(getString(R.string.key_source_currency));
             Preference targetCurrencyPref = findPreference(getString(R.string.key_target_currency));
             sourceCurrencyPref.setOnPreferenceChangeListener(_prefChangeListener);
-            sourceCurrencyPref.setSummary(sourceCurrency);
+            sourceCurrencyPref.setSummary(String.format("%s:\n%s", _sourceSummary, sourceCurrency));
             targetCurrencyPref.setOnPreferenceChangeListener(_prefChangeListener);
-            targetCurrencyPref.setSummary(targetCurrency);
+            targetCurrencyPref.setSummary(String.format("%s\n%s", _targetSummary, targetCurrency));
         }
     }
 
@@ -117,12 +114,16 @@ public class SettingsPrefActivity extends AppCompatPreferenceActivity {
             switch (preference.getKey()) {
                 case "key_request_description_for_item":
                     onItemDescriptionPrefChange(preference, o);
+                    break;
                 case "key_request_description_for_cart":
                     onCartDescriptionPrefChange(preference, o);
+                    break;
                 case "key_source_currency":
                     onSourceCurrencyPrefChange(preference, o );
+                    break;
                 case "key_target_currency":
                     onTargetCurrencyPrefChange(preference,o );
+                    break;
             }
             return true;
         }
@@ -141,7 +142,7 @@ public class SettingsPrefActivity extends AppCompatPreferenceActivity {
     private static void onSourceCurrencyPrefChange(Preference preference, Object o)
     {
         String selectedEntryValue = o.toString();
-        preference.setSummary(selectedEntryValue);
+        preference.setSummary(String.format("%s\n%s", _sourceSummary, selectedEntryValue));
         char currencySymbol = selectedEntryValue.charAt(0);
         _preferredSourceCurrencySymbol = currencySymbol;
         _preferredSourceCurrencyCode = OCRServices.getSymbolsToCodesMapping().get(currencySymbol);
@@ -150,7 +151,7 @@ public class SettingsPrefActivity extends AppCompatPreferenceActivity {
     private static void onTargetCurrencyPrefChange(Preference preference, Object o)
     {
         String selectedEntryValue = o.toString();
-        preference.setSummary(selectedEntryValue);
+        preference.setSummary(String.format("%s\n%s", _targetSummary, selectedEntryValue));
         char currencySymbol = selectedEntryValue.charAt(0);
         _preferredTargetCurrencySymbol = currencySymbol;
         _preferredTargetCurrencyCode = OCRServices.getSymbolsToCodesMapping().get(currencySymbol);
