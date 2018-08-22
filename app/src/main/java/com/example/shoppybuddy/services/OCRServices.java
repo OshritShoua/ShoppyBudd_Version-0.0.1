@@ -34,7 +34,6 @@ public class OCRServices {
     private static final int MORE_THAN_ONE_DOUBLE_WERE_FOUND = -2;
     private static final int UNVALID_INDEX = -1;
 
-
             static
             {
                 _currencySymbolsToCodes.put('€', "EUR");
@@ -241,7 +240,7 @@ public class OCRServices {
             if((codeIndex = indexOfAny(res, _similarCurrencyCodes.keySet().toString())) != UNVALID_INDEX)
             {
                 String resWithoutCodes = res.replaceAll(_similarCurrencyCodes.keySet().toString(), " ");
-                if(foundPriceInText(resWithoutCodes)) //Sanity check
+                if(foundPriceInText(resWithoutCodes) && resWithoutCodes.contains(".")) //Sanity check + make sure this price is double
                 {
                    List<String> currencySymbols = Arrays.asList((_similarCurrencyCodes.get(String.valueOf(res.charAt(codeIndex)))).split(",", -1));
                    for(String currency : currencySymbols)
@@ -259,13 +258,20 @@ public class OCRServices {
             }
 
             int currencyIndex;
-            int resIndex = results.indexOf(res);
-            if(resIndex > 0)
+            if((currencyIndex = indexOfAny(res, _currencyCodesToSymbols.values().toString())) == UNVALID_INDEX)
             {
-                if((currencyIndex = indexOfAny(results.get(resIndex -1), _currencyCodesToSymbols.values().toString())) != UNVALID_INDEX && results.get(resIndex -1).length() == 1)
+                if(i > 0)
                 {
-                    res = results.get(resIndex -1).charAt(currencyIndex) + res;
-                    // todo: OCRResults.second = true;
+                    if((currencyIndex = indexOfAny(results.get(i -1), _currencyCodesToSymbols.values().toString())) != UNVALID_INDEX && results.get(i -1).length() == 1)
+                    {
+                        res = results.get(i -1).charAt(currencyIndex) + res;
+                        OCRResults.setRight(true);
+                    }
+                    else if((currencyIndex = indexOfAny(results.get(i -1), _similarCurrencyCodes.keySet().toString())) != UNVALID_INDEX && results.get(i -1).length() == 1)
+                    {
+                        res = _similarCurrencyCodes.get(String.valueOf(results.get(i -1).charAt(currencyIndex))) + res;
+                        OCRResults.setRight(true);
+                    }
                 }
             }
 
@@ -500,7 +506,10 @@ public class OCRServices {
 
         for(; i < text.length(); i++)
         {
-            digitsCounter++;
+            if(Character.isDigit(text.charAt(i))) //Sanity check
+            {
+                digitsCounter++;
+            }
         }
 
         return digitsCounter;
