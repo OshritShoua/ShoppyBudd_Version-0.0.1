@@ -34,7 +34,6 @@ public class OCRServices {
     private static final int MORE_THAN_ONE_DOUBLE_WERE_FOUND = -2;
     private static final int UNVALID_INDEX = -1;
 
-
             static
             {
                 _currencySymbolsToCodes.put('€', "EUR");
@@ -259,13 +258,20 @@ public class OCRServices {
             }
 
             int currencyIndex;
-            int resIndex = results.indexOf(res);
-            if(resIndex > 0)
+            if((currencyIndex = indexOfAny(res, _currencyCodesToSymbols.values().toString())) == UNVALID_INDEX)
             {
-                if((currencyIndex = indexOfAny(results.get(resIndex -1), _currencyCodesToSymbols.values().toString())) != UNVALID_INDEX && results.get(resIndex -1).length() == 1)
+                if(i > 0)
                 {
-                    res = results.get(resIndex -1).charAt(currencyIndex) + res;
-                    OCRResults.setRight(true);
+                    if((currencyIndex = indexOfAny(results.get(i -1), _currencyCodesToSymbols.values().toString())) != UNVALID_INDEX && results.get(i -1).length() == 1)
+                    {
+                        res = results.get(i -1).charAt(currencyIndex) + res;
+                        OCRResults.setRight(true);
+                    }
+                    else if((currencyIndex = indexOfAny(results.get(i -1), _similarCurrencyCodes.keySet().toString())) != UNVALID_INDEX && results.get(i -1).length() == 1)
+                    {
+                        res = _similarCurrencyCodes.get(String.valueOf(results.get(i -1).charAt(currencyIndex))) + res;
+                        OCRResults.setRight(true);
+                    }
                 }
             }
 
