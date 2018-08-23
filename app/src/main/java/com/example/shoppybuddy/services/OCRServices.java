@@ -499,7 +499,10 @@ public class OCRServices {
 
         for(; i < text.length(); i++)
         {
-            digitsCounter++;
+            if(Character.isDigit(text.charAt(i))) //Sanity check
+            {
+                digitsCounter++;
+            }
         }
 
         return digitsCounter;
