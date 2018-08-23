@@ -265,7 +265,7 @@ public class OCRServices {
                 if((currencyIndex = indexOfAny(results.get(resIndex -1), _currencyCodesToSymbols.values().toString())) != UNVALID_INDEX && results.get(resIndex -1).length() == 1)
                 {
                     res = results.get(resIndex -1).charAt(currencyIndex) + res;
-                    // todo: OCRResults.second = true;
+                    OCRResults.setRight(true);
                 }
             }
 
