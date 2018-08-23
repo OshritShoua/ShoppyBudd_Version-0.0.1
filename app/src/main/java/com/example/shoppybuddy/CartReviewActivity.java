@@ -15,7 +15,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Pair;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,6 +34,8 @@ import org.apache.commons.lang3.tuple.MutablePair;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class CartReviewActivity extends AppCompatActivity implements RecaptureImageDialogFragment.RecaptureImageDialogListener, DescriptionDialogFragment.DescriptionDialogListener,
         PriceSelectionDialogFragment.PriceSelectionDialogListener
@@ -72,10 +73,10 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cart_review);
-        scanResults = findViewById(R.id.scanResults);
+        //scanResults = findViewById(R.id.scanResults);
         if (savedInstanceState != null) {
             capturedImageUri = Uri.parse(savedInstanceState.getString(SAVED_INSTANCE_URI));
-            scanResults.setText(savedInstanceState.getString(SAVED_INSTANCE_RESULT));
+            //scanResults.setText(savedInstanceState.getString(SAVED_INSTANCE_RESULT));
         }
 
         initComponents(getIntent().getStringExtra("calling activity"));
@@ -159,7 +160,7 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             launchMediaScanIntent();
             _ocrServices.GetTextFromCapturedImage(getApplicationContext(), this, capturedImageUri);
-            scanResults.setText(_ocrServices.GetCurrentTextCaptured());
+            //scanResults.setText(_ocrServices.GetCurrentTextCaptured());
             handleCapturedImage();
         }
     }
@@ -260,8 +261,8 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
     private void handleCapturedImage()
     {
 
-        MutablePair<ArrayList<String>, Boolean> ocrResult = _ocrServices.getOCRResult(_pricingServices.getBaseCurrencyCode());
-        if (ocrResult.getLeft().size() == 0)
+        MutablePair<ArrayList<String>, Boolean> ocrResults = _ocrServices.getOCRResult(_pricingServices.getBaseCurrencyCode());
+        if (ocrResults.getLeft().size() == 0)
         {
             RecaptureImageDialogFragment recaptureImageDialogFragment = new RecaptureImageDialogFragment();
             recaptureImageDialogFragment.show(getSupportFragmentManager(), "RetakeImage");
@@ -269,8 +270,8 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
         else
         {
             //todo :  what if couldn't convert
-            List<Price> prices = getPricesFromOcrResults(ocrResults.first);
-            interactWithUserIfNeededAndDeterminePrice(prices, ocrResults.second);
+            List<Price> prices = getPricesFromOcrResults(ocrResults.getLeft());
+            interactWithUserIfNeededAndDeterminePrice(prices, ocrResults.getRight());
         }
     }
 

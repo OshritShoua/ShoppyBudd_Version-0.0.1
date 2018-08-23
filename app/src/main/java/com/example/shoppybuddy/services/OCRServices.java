@@ -241,7 +241,7 @@ public class OCRServices {
             if((codeIndex = indexOfAny(res, _similarCurrencyCodes.keySet().toString())) != UNVALID_INDEX)
             {
                 String resWithoutCodes = res.replaceAll(_similarCurrencyCodes.keySet().toString(), " ");
-                if(foundPriceInText(resWithoutCodes)) //Sanity check
+                if(foundPriceInText(resWithoutCodes) && resWithoutCodes.contains(".")) //Sanity check + make sure this price is double
                 {
                    List<String> currencySymbols = Arrays.asList((_similarCurrencyCodes.get(String.valueOf(res.charAt(codeIndex)))).split(",", -1));
                    for(String currency : currencySymbols)
@@ -279,7 +279,7 @@ public class OCRServices {
             }
             else if(foundPriceInText(res))
             {
-                pricesInResults.add(res);
+                pricesInResults.add("-" + res);
             }
         }
 
@@ -371,7 +371,6 @@ public class OCRServices {
         }
 
         deleteDuplicateValues(OCRResults.getLeft());
-        _currentPriceCaptured = "99.99";
 
         return OCRResults;
     }
