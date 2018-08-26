@@ -16,28 +16,29 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PriceSelectionDialogFragment extends DialogFragment
+public class CurrencyConflictDialogFragment extends DialogFragment
 {
-    public interface PriceSelectionDialogListener
+    public interface CurrencyConflictDialogListener
     {
         void OnPriceSelected(Price price);
         void OnRetakeImageClick(DialogFragment dialog);
         void onReturnToCartClick(DialogFragment dialog);
+        void OnChangeSourceCurrenciesClick(Character newCurrency);
     }
 
-    public static PriceSelectionDialogFragment newInstance(List<Price> prices, String dialogPurpose) {
-        PriceSelectionDialogFragment f = new PriceSelectionDialogFragment();
+    public static CurrencyConflictDialogFragment newInstance(String scannedCurrency, String cartCurrency) {
+        CurrencyConflictDialogFragment f = new CurrencyConflictDialogFragment();
 
         Bundle args = new Bundle();
-        args.putString("purpose",dialogPurpose);
-        args.putSerializable("prices", (Serializable) prices);
+        args.putString("scannedCurrency",scannedCurrency);
+        args.putString("cartCurrency",cartCurrency);
         f.setArguments(args);
 
         return f;
     }
 
     // Use this instance of the interface to deliver action events
-    PriceSelectionDialogFragment.PriceSelectionDialogListener mListener;
+    CurrencyConflictDialogFragment.CurrencyConflictDialogListener mListener;
 
     // Override the Fragment.onAttach() method to instantiate the NoticeDialogListener
     @Override
@@ -46,7 +47,7 @@ public class PriceSelectionDialogFragment extends DialogFragment
         // Verify that the host activity implements the callback interface
         try {
             // Instantiate the NoticeDialogListener so we can send events to the host
-            mListener = (PriceSelectionDialogFragment.PriceSelectionDialogListener) activity;
+            mListener = (CurrencyConflictDialogFragment.CurrencyConflictDialogListener) activity;
         } catch (ClassCastException e) {
             // The activity doesn't implement the interface, throw exception
             throw new ClassCastException(activity.toString()
@@ -57,40 +58,24 @@ public class PriceSelectionDialogFragment extends DialogFragment
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-
-        final List<Price> prices = (List<Price>) getArguments().getSerializable("prices");
-        String dialogPurpose = getArguments().getString("purpose");
-        int titleResId = dialogPurpose == "ConfirmPrice" ? R.string.price_confirmation_text : R.string.price_selection_text;
-        List<CharSequence> temp = new ArrayList<>();
-        for (Price p : prices)
-            temp.add(Double.toString(p.getOriginalAmount()) + p.getFromCurrencySymbol());
-
-        CharSequence[] priceStrings = temp.toArray(new CharSequence[temp.size()]);
-
+        final String scannedCurrency = getArguments().getString("scannedCurrency");
+        String cartCurrency = getArguments().getString("cartCurrency");
+        String dialogText = getString(R.string.CurrencyConflictDialogText, scannedCurrency, cartCurrency, scannedCurrency);
         // Use the Builder class for convenient dialog construction
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        TextView textView = new TextView(getActivity());
-        textView.setText(titleResId);
-        builder.setCustomTitle(textView)
-                .setItems(priceStrings, new DialogInterface.OnClickListener()
-                {
-                    public void onClick(DialogInterface dialogInterface, int i)
-                    {
-                        mListener.OnPriceSelected(prices.get(i));
-                    }
-                })
+        builder.setMessage(dialogText)
                 .setPositiveButton(R.string.retake_image_dialog_retry_button_text, new DialogInterface.OnClickListener()
                 {
                     public void onClick(DialogInterface dialog, int id)
                     {
-                        mListener.OnRetakeImageClick(PriceSelectionDialogFragment.this);
+                        mListener.OnRetakeImageClick(CurrencyConflictDialogFragment.this);
                     }
                 })
-                .setNegativeButton(R.string.retake_image_dialog_return_button_text, new DialogInterface.OnClickListener()
+                .setNegativeButton(R.string.Change_currencies_button_text, new DialogInterface.OnClickListener()
                 {
                     public void onClick(DialogInterface dialog, int id)
                     {
-                        mListener.onReturnToCartClick(PriceSelectionDialogFragment.this);
+                        mListener.OnChangeSourceCurrenciesClick(scannedCurrency.charAt(0));
                     }
                 });
         // Create the AlertDialog object and return it

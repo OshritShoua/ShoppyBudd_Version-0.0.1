@@ -52,24 +52,22 @@ public class PricingServices
                 @Query("symbols") String requestedRates);
     }
 
-    public List<Price> ConvertPrices(List<Price> pricesToConvert, String targetCurrency)
+    public List<Price> ConvertPrices(List<Price> pricesToConvert, String sourceCurrencyCode, String targetCurrencyCode)
     {
-        for(Price price : pricesToConvert)
+        _baseCurrencyCode = sourceCurrencyCode;
+        _targetCurrencyCode = targetCurrencyCode;
+        try
         {
-            _baseCurrencyCode = OCRServices.getSymbolsToCodesMapping().get(price.getCurrencySymbol());
-            _targetCurrencyCode = targetCurrency;
-            try
-            {
-                String ratesResponse = getConversionRatesFromApi();
-                parseRatesFromConversionApiResponse(ratesResponse);
-            }
-            catch (Exception e)
-            {
-                e.printStackTrace();
-            }
-
-            calculateConvertedPrice(price);
+            String ratesResponse = getConversionRatesFromApi();
+            parseRatesFromConversionApiResponse(ratesResponse);
         }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+
+        for(Price price : pricesToConvert)
+            calculateConvertedPrice(price);
 
         return pricesToConvert;
     }

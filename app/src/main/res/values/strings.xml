@@ -25,18 +25,20 @@
     <string name="dialog_title_target_currency">Select the currency to convert to</string>
     <string name="key_source_currency">key_source_currency</string>
     <string name="key_target_currency">key_target_currency</string>
-    <string name="title_source_currency">Default Source Currency</string>
-    <string name="title_target_currency">Target Currency</string>
+    <string name="title_source_currency">Cart Source Currency</string>
+    <string name="title_target_currency">Cart Target Currency</string>
     <string name="pref_title_currency_conversions">Currency Settings</string>
     <string name="go_shopping">Go shopping!</string>
     <string name="scan_results">Scan results will be shown here</string>
     <string name="got_it">Got it!</string>
     <string name="go_to_settings">Go to Settings</string>
     <string name="select_currencies_dialog_text">Please select both currencies to work with from the Settings</string>
-    <string name="summary_source_currency">The default source currency to use for items if none has been identified on the label</string>
-    <string name="summary_target_currency">The target currency for new carts</string>
+    <string name="summary_source_currency">The default source currency for new carts</string>
+    <string name="summary_target_currency">The default target currency for new carts</string>
     <string name="price_confirmation_text">Just to be sure, is this the price you meant? If so, click on it. If it\'s not, you can try again</string>
     <string name="price_confirmed">Yup</string>
     <string name="price_rejected">No, try again</string>
     <string name="price_selection_text">We found more than one price in the photo, please select the right one. If it\'s not there, you can try again</string>
+    <string name="CurrencyConflictDialogText">The item\'s currency is %s and doesn\'t match this cart\'s currency, %s.\nWould you like to change all existing items to %s?</string>
+    <string name="Change_currencies_button_text">Change currencies</string>
 </resources>

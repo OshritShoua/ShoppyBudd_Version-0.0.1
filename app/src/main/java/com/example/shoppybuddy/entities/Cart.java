@@ -22,6 +22,9 @@ public class Cart
     @ColumnInfo(name = "total cost")
     private double _totalCost;
 
+    @ColumnInfo(name = "from currency")
+    private char _fromCurrency;
+
     @ColumnInfo(name = "to currency")
     private char _toCurrency;
 
@@ -45,9 +48,10 @@ public class Cart
         this._description = _description;
     }
 
-    public Cart(char toCurrency)
+    public Cart(char fromCurrency, char toCurrency)
     {
-        this._toCurrency = toCurrency;
+        _fromCurrency = fromCurrency;
+        _toCurrency = toCurrency;
     }
 
     @Ignore
@@ -62,6 +66,13 @@ public class Cart
     public List<Item> GetItems()
     {
         return items;
+    }
+
+    public void RecalculateTotalPrice()
+    {
+        _totalCost = 0;
+        for(Item item : items)
+            _totalCost += item.getConvertedPrice();
     }
 
     @Override
@@ -96,6 +107,21 @@ public class Cart
     public String get_toCurrencyCode()
     {
         return OCRServices.getSymbolsToCodesMapping().get(_toCurrency);
+    }
+
+    public String get_fromCurrencyCode()
+    {
+        return OCRServices.getSymbolsToCodesMapping().get(_fromCurrency);
+    }
+
+    public char get_fromCurrency()
+    {
+        return _fromCurrency;
+    }
+
+    public void set_fromCurrency(char _fromCurrency)
+    {
+        this._fromCurrency = _fromCurrency;
     }
 }
 

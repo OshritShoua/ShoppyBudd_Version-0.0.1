@@ -8,7 +8,6 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Looper;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -38,7 +37,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class CartReviewActivity extends AppCompatActivity implements RecaptureImageDialogFragment.RecaptureImageDialogListener, DescriptionDialogFragment.DescriptionDialogListener,
-        PriceSelectionDialogFragment.PriceSelectionDialogListener
+        PriceSelectionDialogFragment.PriceSelectionDialogListener, CurrencyConflictDialogFragment.CurrencyConflictDialogListener
 {
     private static final int REQUEST_IMAGE_CAPTURE = 10;
     private static final int REQUEST_WRITE_PERMISSION = 20;
@@ -54,19 +53,45 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
     private AppDataBase _db;
     private Uri capturedImageUri;
     private TextView scanResults;
+    private Character _scannedSourceCurrency;
 
     @Override
     protected void onResume()
     {
         super.onResume();
-        if(_cart.get_toCurrency() == 0)
+        UpdateCurrenciesIfNeeded();
+        UpdateUI();
+    }
+
+    private void UpdateCurrenciesIfNeeded()
+    {
+        if(_cart.get_fromCurrency() == 0 || _cart.get_toCurrency() == 0)
         {
-            _cart.set_toCurrency(SettingsPrefActivity.get_preferredTargetCurrencySymbol());
+            if(_cart.get_fromCurrency() == 0)
+                _cart.set_fromCurrency(SettingsPrefActivity.get_preferredSourceCurrencySymbol());
+            if(_cart.get_toCurrency() == 0)
+                _cart.set_toCurrency(SettingsPrefActivity.get_preferredTargetCurrencySymbol());
+
             _db.cartDao().updateCart(_cart);
         }
+    }
 
+    private void UpdateUI()
+    {
+        UpdateCartNameTextView();
         InitializeItemListView();
+        UpdateSourceSymbol();
         UpdateSumUI();
+    }
+
+    private void UpdateSourceSymbol()
+    {
+        char symbol = _cart.get_fromCurrency();
+        TextView symbolTextView = findViewById(R.id.textViewSourceSymbol);
+        if(symbol != 0)
+            symbolTextView.setText(Character.toString(symbol));
+        else
+            symbolTextView.setText("Currency not selected");
     }
 
     @Override
@@ -92,7 +117,7 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
                         String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA}, REQUEST_WRITE_PERMISSION);
             }
         });
-        _cart = new Cart(SettingsPrefActivity.get_preferredTargetCurrencySymbol());
+        _cart = new Cart(SettingsPrefActivity.get_preferredSourceCurrencySymbol(),SettingsPrefActivity.get_preferredTargetCurrencySymbol());
         _db = Room.databaseBuilder(getApplicationContext(), AppDataBase.class, "userShoppings").fallbackToDestructiveMigration().allowMainThreadQueries().build();
         if(callingActivity.equals(MainActivity.class.getSimpleName()))
         {
@@ -108,13 +133,8 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
         {
             int id = getIntent().getIntExtra("cart id", -1);
             _cart = _db.cartDao().getCartById(id);
-            UpdateCartNameTextView(_cart.get_description());
             _cart.GetItems().addAll(_db.itemDao().getItemsByCartId(id));
-            if(_cart.get_toCurrency()== 0) //note - this is for the carts that were created without a currency, and then one was selected which needs to be updated
-            {
-                _cart.set_toCurrency(SettingsPrefActivity.get_preferredTargetCurrencySymbol());
-                _db.cartDao().updateCart(_cart);
-            }
+            UpdateCurrenciesIfNeeded();
         }
 
         _pricingServices = new PricingServices();
@@ -147,11 +167,11 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
         char currencySymbol = _cart.get_toCurrency();
         if(currencySymbol != 0)
         {
-            String totalPrice = String.format("%.2f%c", _cart.get_totalCost(), _cart.get_toCurrency());
+            String totalPrice = String.format("%.2f%c", _cart.get_totalCost(), currencySymbol);
             totalSumTextView.setText(totalPrice);
         }
         else
-            totalSumTextView.setText("Currency not selected");
+            totalSumTextView.setText("");
     }
 
 
@@ -167,9 +187,8 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
 
     public void OnItemDescriptionDone(String description)
     {
-        boolean isUIThread = Looper.myLooper() == Looper.getMainLooper();
         Item item = new Item(_originalAmount, _convertedAmount, description, _cart.getId(),
-                SettingsPrefActivity.get_preferredSourceCurrencySymbol(), _cart.get_toCurrency());
+                _scannedSourceCurrency, _cart.get_toCurrency());
         _cart.AddItem(item);
         ListView view = (ListView)findViewById(R.id._dynamic_item_list);
         ArrayAdapter adapter = (ArrayAdapter<Item>)view.getAdapter();
@@ -187,14 +206,14 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
             description = "My shopping cart #" + Integer.toString(_cart.getId() + 1);
 
         _cart.set_description(description);
+        UpdateCartNameTextView();
         _db.cartDao().updateCart(_cart);
-        UpdateCartNameTextView(description);
     }
 
-    public void UpdateCartNameTextView(String description)
+    public void UpdateCartNameTextView()
     {
         TextView textView = findViewById(R.id.cartNameText);
-        textView.setText(description);
+        textView.setText(_cart.get_description());
     }
 
     @Override
@@ -206,6 +225,8 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
     public void onReturnToCartClick(DialogFragment dialog) {
         return;
     }
+
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item)
@@ -237,7 +258,7 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
     }
 
     private void takePicture() {
-        if(_cart.get_toCurrency() == 0 || SettingsPrefActivity.get_preferredSourceCurrencySymbol() == 0)
+        if(_cart.get_toCurrency() == 0 || _cart.get_fromCurrency() == 0)
         {
             CurrencyNotSelectedDialogFragment fragment = new CurrencyNotSelectedDialogFragment();
             fragment.show(getSupportFragmentManager(), "Select currency");
@@ -304,7 +325,7 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
             if(currencyAndAmount.charAt(0) != '-')
                 res.add(new Price(Double.parseDouble(currencyAndAmount.substring(1)), currencyAndAmount.charAt(0)));
             else
-                res.add(new Price(Double.parseDouble(currencyAndAmount.substring(1)), SettingsPrefActivity.get_preferredSourceCurrencySymbol()));
+                res.add(new Price(Double.parseDouble(currencyAndAmount.substring(1)), _cart.get_fromCurrency()));
         }
 
         return res;
@@ -317,12 +338,53 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
     }
 
     @Override
+    public void OnChangeSourceCurrenciesClick(Character newCurrency)
+    {
+        //update objects
+        _cart.set_fromCurrency(newCurrency);
+        List<Price> newPrices = new ArrayList<>();
+        List<Item> items = _cart.GetItems();
+        for(Item item : items)
+        {
+            item.set_fromCurrency(newCurrency);
+            newPrices.add(new Price(item.getOriginalPrice(), newCurrency));
+        }
+
+        _pricingServices.ConvertPrices(newPrices, _cart.get_fromCurrencyCode(), _cart.get_toCurrencyCode());
+        for(int i = 0; i < newPrices.size(); i++)
+            items.get(i).setConvertedPrice(newPrices.get(i).getConvertedAmount());
+        _cart.RecalculateTotalPrice();
+
+        //save changes to database
+        _db.cartDao().updateCart(_cart);
+        _db.itemDao().updateItems(items);
+
+        //update UI
+        UpdateSourceSymbol();
+
+        //handle description + add new item to cart
+        HandleItemDescription();
+    }
+
+    @Override
     public void OnPriceSelected(Price price)
     {   //todo - not important...but should change this to passing on the price to the dialogs.
-        _pricingServices.ConvertPrices(Arrays.asList(price), _cart.get_toCurrencyCode());
+        _pricingServices.ConvertPrices(Arrays.asList(price), price.get_fromCurrencyCode(), _cart.get_toCurrencyCode());
         _originalAmount = price.getOriginalAmount();
         _convertedAmount = price.getConvertedAmount();
+        _scannedSourceCurrency = price.getFromCurrencySymbol();
+        if(_scannedSourceCurrency != _cart.get_fromCurrency())
+        {
+            CurrencyConflictDialogFragment currencyConflictDialogFragment = CurrencyConflictDialogFragment.newInstance(_scannedSourceCurrency.toString(), Character.toString(_cart.get_fromCurrency()));
+            currencyConflictDialogFragment.show(getSupportFragmentManager(), "ResolveConflict");
+            return;
+        }
 
+        HandleItemDescription();
+    }
+
+    private void HandleItemDescription()
+    {
         if(SettingsPrefActivity.ShouldRequestItemDescription())
         {
             DescriptionDialogFragment itemDescriptionDialogFragment = DescriptionDialogFragment.newInstance("moo", DescriptionDialogFragment.DialogPurpose.itemDescription);
