@@ -13,12 +13,11 @@
         android:layout_height="0dp"
         android:layout_marginBottom="8dp"
         android:layout_marginTop="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/textViewFrom"
+        app:layout_constraintBottom_toTopOf="@+id/FromButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/cartNameText"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintTop_toBottomOf="@+id/cartNameText" />
 
     <ImageButton
         android:id="@+id/cameraButton"
@@ -58,23 +57,9 @@
         android:textColor="#c46d2f"
         android:textSize="24sp"
         android:textStyle="bold"
-        app:layout_constraintBaseline_toBaselineOf="@+id/SumTitleText"
+        app:layout_constraintBaseline_toBaselineOf="@+id/sumTitleText"
         app:layout_constraintEnd_toEndOf="parent"
         tools:text="Sum holder" />
-
-    <TextView
-        android:id="@+id/SumTitleText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginStart="8dp"
-        android:text="Total"
-        android:textColor="#c46d2f"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@+id/cameraButton"
-        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/sumTitleText"
@@ -88,26 +73,19 @@
         android:textSize="24sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/cameraButton"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="@+id/FromButton"
+        app:layout_constraintTop_toTopOf="@+id/totalSumText" />
 
-    <TextView
-        android:id="@+id/textViewSourceSymbol"
+    <Button
+        android:id="@+id/FromButton"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="8dp"
-        android:layout_marginStart="8dp"
-        android:text="$"
-        app:layout_constraintStart_toEndOf="@+id/textViewFrom"
-        app:layout_constraintTop_toTopOf="@+id/textViewFrom" />
-
-    <TextView
-        android:id="@+id/textViewFrom"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginStart="8dp"
-        android:text="From:"
+        android:layout_height="38dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginStart="16dp"
+        android:onClick="OnChangeSourceCurrenciesClick"
+        android:text="From: "
+        android:textSize="12sp"
         app:layout_constraintBottom_toTopOf="@+id/sumTitleText"
         app:layout_constraintStart_toStartOf="parent" />
 

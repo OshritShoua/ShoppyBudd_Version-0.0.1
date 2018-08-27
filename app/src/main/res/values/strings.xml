@@ -39,6 +39,9 @@
     <string name="price_confirmed">Yup</string>
     <string name="price_rejected">No, try again</string>
     <string name="price_selection_text">We found more than one price in the photo, please select the right one. If it\'s not there, you can try again</string>
-    <string name="CurrencyConflictDialogText">The item\'s currency is %s and doesn\'t match this cart\'s currency, %s.\nWould you like to change all existing items to %s?</string>
+    <string name="CurrencyConflictDialogText">You\'re trying to enter a price in %s but the cart\'s currency is %s.\nWould you like to change all existing items to %s?</string>
     <string name="Change_currencies_button_text">Change currencies</string>
+    <string name="FromButtonText">From: %s</string>
+    <string name="CurrencyNotSelectedString">Currency not selected</string>
+    <string name="CurrencySelection">Please select the source currency for this cart</string>
 </resources>

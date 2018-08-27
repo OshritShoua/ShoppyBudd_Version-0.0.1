@@ -10,20 +10,13 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
-import android.widget.TextView;
-
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 public class CurrencyConflictDialogFragment extends DialogFragment
 {
     public interface CurrencyConflictDialogListener
     {
-        void OnPriceSelected(Price price);
         void OnRetakeImageClick(DialogFragment dialog);
-        void onReturnToCartClick(DialogFragment dialog);
-        void OnChangeSourceCurrenciesClick(Character newCurrency);
+        void OnChangeSourceCurrenciesClick(Character newCurrency, boolean itemAdditionPending);
     }
 
     public static CurrencyConflictDialogFragment newInstance(String scannedCurrency, String cartCurrency) {
@@ -37,14 +30,11 @@ public class CurrencyConflictDialogFragment extends DialogFragment
         return f;
     }
 
-    // Use this instance of the interface to deliver action events
     CurrencyConflictDialogFragment.CurrencyConflictDialogListener mListener;
 
-    // Override the Fragment.onAttach() method to instantiate the NoticeDialogListener
     @Override
     public void onAttach(Context activity) {
         super.onAttach(activity);
-        // Verify that the host activity implements the callback interface
         try {
             // Instantiate the NoticeDialogListener so we can send events to the host
             mListener = (CurrencyConflictDialogFragment.CurrencyConflictDialogListener) activity;
@@ -75,7 +65,7 @@ public class CurrencyConflictDialogFragment extends DialogFragment
                 {
                     public void onClick(DialogInterface dialog, int id)
                     {
-                        mListener.OnChangeSourceCurrenciesClick(scannedCurrency.charAt(0));
+                        mListener.OnChangeSourceCurrenciesClick(scannedCurrency.charAt(0), true);
                     }
                 });
         // Create the AlertDialog object and return it

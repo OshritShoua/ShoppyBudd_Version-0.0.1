@@ -11,6 +11,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
 
@@ -28,6 +29,9 @@ public class PricingServices
     private String _targetCurrencyCode = "ILS";
     private double _euroToBaseCurrencyRate;
     private double _euroToTargetCurrencyRate;
+    private Calendar _lastRatesFetchingTime;
+    private long FIFTEEN_MINUTES_IN_MILLIS = 900000;
+    private String _rates;
 
     public double GetConvertedPrice() {
         return _convertedPrice;
@@ -56,10 +60,12 @@ public class PricingServices
     {
         _baseCurrencyCode = sourceCurrencyCode;
         _targetCurrencyCode = targetCurrencyCode;
+
         try
         {
-            String ratesResponse = getConversionRatesFromApi();
-            parseRatesFromConversionApiResponse(ratesResponse);
+            if(_lastRatesFetchingTime == null || fifteenMinutesPassedSinceLastRatesFetch())
+                getConversionRatesFromApi();
+            parseRatesFromConversionApiResponse(_rates);
         }
         catch (Exception e)
         {
@@ -72,7 +78,12 @@ public class PricingServices
         return pricesToConvert;
     }
 
-    private String getConversionRatesFromApi() throws IOException
+    private boolean fifteenMinutesPassedSinceLastRatesFetch()
+    {
+        return Calendar.getInstance().getTimeInMillis() - _lastRatesFetchingTime.getTimeInMillis() >= FIFTEEN_MINUTES_IN_MILLIS;
+    }
+
+    private void getConversionRatesFromApi() throws IOException
     {
 
         if (android.os.Build.VERSION.SDK_INT > 9) {
@@ -95,8 +106,8 @@ public class PricingServices
         delimitedCodes = delimitedCodes.substring(0, delimitedCodes.length() - 1);
 
         Call<ResponseBody> call = ratesProvider.getRates("28b1f943a2bc43b31e27eda845458bb8", delimitedCodes);
-        return call.execute().body().string();
-
+        _rates = call.execute().body().string();
+        _lastRatesFetchingTime = Calendar.getInstance();
     }
 
 
