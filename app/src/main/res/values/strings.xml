@@ -44,4 +44,7 @@
     <string name="FromButtonText">From: %s</string>
     <string name="CurrencyNotSelectedString">Currency not selected</string>
     <string name="CurrencySelection">Please select the source currency for this cart</string>
+    <string name="action_item_title">action item title</string>
+    <string name="delete">Delete</string>
+    <string name="add_discount">Add discount</string>
 </resources>

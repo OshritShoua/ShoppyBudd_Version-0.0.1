@@ -2,6 +2,8 @@ package com.example.shoppybuddy;
 
 import android.Manifest;
 import android.arch.persistence.room.Room;
+import android.content.ClipData;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -15,9 +17,13 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
+import android.view.ContextMenu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -140,8 +146,48 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
             UpdateCurrenciesIfNeeded();
         }
 
+        registerForContextMenu(findViewById(R.id._dynamic_item_list));
         _pricingServices = new PricingServices();
         _ocrServices = new OCRServices();
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo)
+    {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.item_selection_menu, menu );
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        switch (item.getItemId()) {
+            case R.id.add_discount:
+                addDiscount(info.id, item.getActionView());
+                return true;
+            case R.id.delete_item:
+                deleteItem(info.id);
+                return true;
+            default:
+                return super.onContextItemSelected(item);
+        }
+    }
+
+    private void addDiscount(long id, View view)
+    {
+
+    }
+
+    private void deleteItem(long id)
+    {
+        ListView items = findViewById(R.id._dynamic_item_list);
+        Item item = (Item)items.getAdapter().getItem((int)id);
+        _cart.GetItems().remove((int)id);
+        _cart.set_totalCost(_cart.get_totalCost() - item.getConvertedPrice());
+        _db.itemDao().delete(item);
+        _db.cartDao().updateCart(_cart);
+        RefreshPricingUIDetails();
     }
 
     private void InitializeItemListView()
