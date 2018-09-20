@@ -1,15 +1,19 @@
 package com.example.shoppybuddy;
 
+import com.example.shoppybuddy.services.OCRServices;
+
+import java.util.Locale;
+
 public class Price
 {
     private double originalAmount;
     private double convertedAmount;
-    private Character currencySymbol;
+    private Character fromCurrencySymbol;
 
-    public Price(double originalAmount, Character currencySymbol)
+    Price(double originalAmount, Character fromCurrencySymbol)
     {
         this.originalAmount = originalAmount;
-        this.currencySymbol = currencySymbol;
+        this.fromCurrencySymbol = fromCurrencySymbol;
     }
 
     public double getOriginalAmount()
@@ -17,9 +21,14 @@ public class Price
         return originalAmount;
     }
 
-    public Character getCurrencySymbol()
+    public Character getFromCurrencySymbol()
     {
-        return currencySymbol;
+        return fromCurrencySymbol;
+    }
+
+    public String get_fromCurrencyCode()
+    {
+        return OCRServices.getSymbolsToCodesMapping().get(fromCurrencySymbol);
     }
 
     public void setConvertedAmount(double convertedAmount)
@@ -35,7 +44,7 @@ public class Price
     @Override
     public String toString()
     {
-        String originalAmount = String.format("%.2f", this.originalAmount);
-        return originalAmount + Character.toString(currencySymbol);
+        String originalAmount = String.format(Locale.getDefault(),"%.2f", this.originalAmount);
+        return originalAmount + Character.toString(fromCurrencySymbol);
     }
 }

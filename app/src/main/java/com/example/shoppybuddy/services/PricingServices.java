@@ -11,6 +11,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
 
@@ -24,26 +25,17 @@ import retrofit2.http.Query;
 public class PricingServices
 {
     private static final String TAG = "ShoppyBuddy.java";
-    private String _baseCurrencyCode = "USD";
-    private String _targetCurrencyCode = "ILS";
+    private String _baseCurrencyCode;
+    private String _targetCurrencyCode;
     private double _euroToBaseCurrencyRate;
     private double _euroToTargetCurrencyRate;
-
-    public double GetConvertedPrice() {
-        return _convertedPrice;
-    }
+    private Calendar _lastRatesFetchingTime;
+    private long FIFTEEN_MINUTES_IN_MILLIS = 900000;
+    private String _rates;
 
     public String getBaseCurrencyCode() {
         return _baseCurrencyCode;
     }
-
-    public String getTargetCurrencyCode() {
-        return _targetCurrencyCode;
-    }
-
-
-    private double _convertedPrice;
-
     public interface RatesClientRequest
     {
         @GET("/latest")
@@ -52,36 +44,35 @@ public class PricingServices
                 @Query("symbols") String requestedRates);
     }
 
-    public List<Price> ConvertPrices(List<Price> pricesToConvert, String targetCurrency)
+    public void ConvertPrices(List<Price> pricesToConvert, String sourceCurrencyCode, String targetCurrencyCode)
     {
-        for(Price price : pricesToConvert)
+        _baseCurrencyCode = sourceCurrencyCode;
+        _targetCurrencyCode = targetCurrencyCode;
+        try
         {
-            _baseCurrencyCode = OCRServices.getSymbolsToCodesMapping().get(price.getCurrencySymbol());
-            _targetCurrencyCode = targetCurrency;
-            try
-            {
-                String ratesResponse = getConversionRatesFromApi();
-                parseRatesFromConversionApiResponse(ratesResponse);
-            }
-            catch (Exception e)
-            {
-                e.printStackTrace();
-            }
-
-            calculateConvertedPrice(price);
+            if(_lastRatesFetchingTime == null || fifteenMinutesPassedSinceLastRatesFetch())
+                getConversionRatesFromApi();
+            parseRatesFromConversionApiResponse(_rates);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
         }
 
-        return pricesToConvert;
+        for(Price price : pricesToConvert)
+            calculateConvertedPrice(price);
     }
 
-    private String getConversionRatesFromApi() throws IOException
+    private boolean fifteenMinutesPassedSinceLastRatesFetch()
     {
+        return Calendar.getInstance().getTimeInMillis() - _lastRatesFetchingTime.getTimeInMillis() >= FIFTEEN_MINUTES_IN_MILLIS;
+    }
 
-        if (android.os.Build.VERSION.SDK_INT > 9) {
-            StrictMode.ThreadPolicy policy =
-                    new StrictMode.ThreadPolicy.Builder().permitAll().build();
-            StrictMode.setThreadPolicy(policy);
-        }
+    private void getConversionRatesFromApi() throws IOException
+    {
+        StrictMode.ThreadPolicy policy =
+                new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
 
         Retrofit.Builder builder = new Retrofit.Builder().baseUrl("http://data.fixer.io/api/")
                 .addConverterFactory(GsonConverterFactory.create());
@@ -95,18 +86,16 @@ public class PricingServices
         }
         String delimitedCodes = sb.toString();
         delimitedCodes = delimitedCodes.substring(0, delimitedCodes.length() - 1);
-
         Call<ResponseBody> call = ratesProvider.getRates("28b1f943a2bc43b31e27eda845458bb8", delimitedCodes);
-        return call.execute().body().string();
-
+        _rates = call.execute().body().string();
+        _lastRatesFetchingTime = Calendar.getInstance();
     }
-
 
     private void parseRatesFromConversionApiResponse(String response) throws JSONException
     {
         JSONObject json = new JSONObject(response);
 
-        if (!json.has("success") || json.getBoolean("success") != true || !json.has("rates"))
+        if (!json.has("success") || !json.getBoolean("success") || !json.has("rates"))
         {
             Log.v(TAG, "bad conversion url response");
             throw new JSONException("bad conversion url response");
@@ -118,7 +107,7 @@ public class PricingServices
         Iterator<String> keysIterator = currencyCodesToRates.keys();
         while(keysIterator.hasNext())
         {
-            String currencyCode = (String)keysIterator.next();
+            String currencyCode = keysIterator.next();
             if(currencyCode.equals(_baseCurrencyCode))
                 euroToBaseCurrencyRate = currencyCodesToRates.getDouble(currencyCode);
             if(currencyCode.equals(_targetCurrencyCode))
@@ -143,4 +132,3 @@ public class PricingServices
                 .format(priceInTargetCurrency)));
     }
 }
-

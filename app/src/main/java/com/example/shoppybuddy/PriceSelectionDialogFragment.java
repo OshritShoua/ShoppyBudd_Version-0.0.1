@@ -3,7 +3,6 @@ package com.example.shoppybuddy;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
@@ -15,7 +14,6 @@ import android.widget.TextView;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class PriceSelectionDialogFragment extends DialogFragment
@@ -24,7 +22,7 @@ public class PriceSelectionDialogFragment extends DialogFragment
     {
         void OnPriceSelected(Price price);
         void OnRetakeImageClick(DialogFragment dialog);
-        void onReturnToCartClick(DialogFragment dialog);
+        void OnEnterPriceManuallyRequest();
     }
 
     public static PriceSelectionDialogFragment newInstance(List<Price> prices, String dialogPurpose) {
@@ -34,23 +32,17 @@ public class PriceSelectionDialogFragment extends DialogFragment
         args.putString("purpose",dialogPurpose);
         args.putSerializable("prices", (Serializable) prices);
         f.setArguments(args);
-
         return f;
     }
 
-    // Use this instance of the interface to deliver action events
     PriceSelectionDialogFragment.PriceSelectionDialogListener mListener;
 
-    // Override the Fragment.onAttach() method to instantiate the NoticeDialogListener
     @Override
     public void onAttach(Context activity) {
         super.onAttach(activity);
-        // Verify that the host activity implements the callback interface
         try {
-            // Instantiate the NoticeDialogListener so we can send events to the host
             mListener = (PriceSelectionDialogFragment.PriceSelectionDialogListener) activity;
         } catch (ClassCastException e) {
-            // The activity doesn't implement the interface, throw exception
             throw new ClassCastException(activity.toString()
                     + " must implement NoticeDialogListener");
         }
@@ -65,11 +57,9 @@ public class PriceSelectionDialogFragment extends DialogFragment
         int titleResId = dialogPurpose == "ConfirmPrice" ? R.string.price_confirmation_text : R.string.price_selection_text;
         List<CharSequence> temp = new ArrayList<>();
         for (Price p : prices)
-            temp.add(Double.toString(p.getOriginalAmount()) + p.getCurrencySymbol());
+            temp.add(Double.toString(p.getOriginalAmount()) + p.getFromCurrencySymbol());
 
         CharSequence[] priceStrings = temp.toArray(new CharSequence[temp.size()]);
-
-        // Use the Builder class for convenient dialog construction
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         TextView textView = new TextView(getActivity());
         textView.setText(titleResId);
@@ -88,14 +78,13 @@ public class PriceSelectionDialogFragment extends DialogFragment
                         mListener.OnRetakeImageClick(PriceSelectionDialogFragment.this);
                     }
                 })
-                .setNegativeButton(R.string.retake_image_dialog_return_button_text, new DialogInterface.OnClickListener()
+                .setNegativeButton(R.string.enter_price_button_text, new DialogInterface.OnClickListener()
                 {
                     public void onClick(DialogInterface dialog, int id)
                     {
-                        mListener.onReturnToCartClick(PriceSelectionDialogFragment.this);
+                        mListener.OnEnterPriceManuallyRequest();
                     }
                 });
-        // Create the AlertDialog object and return it
         return builder.create();
     }
 
