@@ -7,11 +7,12 @@ import android.arch.persistence.room.PrimaryKey;
 
 import com.example.shoppybuddy.services.OCRServices;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-public class Cart
+public class Cart implements Serializable
 {
     @PrimaryKey(autoGenerate = true)
     private int id;
@@ -19,8 +20,11 @@ public class Cart
     @ColumnInfo(name = "description")
     private String _description;
 
-    @ColumnInfo(name = "total cost")
-    private double _totalCost;
+    @ColumnInfo(name = "total dest cost")
+    private double _totalDestCost;
+
+    @ColumnInfo(name = "total src cost")
+    private double _totalSrcCost;
 
     @ColumnInfo(name = "from currency")
     private char _fromCurrency;
@@ -60,7 +64,8 @@ public class Cart
     public void AddItem(Item item)
     {
         items.add(item);
-        _totalCost += item.getConvertedPrice();
+        _totalSrcCost += item.getOriginalPrice();
+        _totalDestCost += item.getConvertedPrice();
     }
 
     public List<Item> GetItems()
@@ -70,28 +75,43 @@ public class Cart
 
     public void RecalculateTotalPrice()
     {
-        _totalCost = 0;
+        _totalSrcCost = 0;
+        _totalDestCost = 0;
         for(Item item : items)
-            _totalCost += item.getConvertedPrice();
+        {
+            _totalSrcCost += item.getAfterDiscountPrice();
+            _totalDestCost += item.getConvertedPrice();
+        }
+
     }
 
     @Override
     public String toString()
     {
-        String totalCost = String.format("%.2f", _totalCost);
+        String totalCost = String.format("%.2f", _totalDestCost);
         if(_description != null)
             return _description + "\n" + "Total: " + totalCost + Character.toString(_toCurrency);
         return super.toString();
     }
 
-    public double get_totalCost()
+    public double get_totalDestCost()
     {
-        return _totalCost;
+        return _totalDestCost;
     }
 
-    public void set_totalCost(double _totalCost)
+    public void set_totalDestCost(double _totalDestCost)
     {
-        this._totalCost = _totalCost;
+        this._totalDestCost = _totalDestCost;
+    }
+
+    public double get_totalSrcCost()
+    {
+        return _totalSrcCost;
+    }
+
+    public void set_totalSrcCost(double _totalSrcCost)
+    {
+        this._totalSrcCost = _totalSrcCost;
     }
 
     public char get_toCurrency()
@@ -124,4 +144,3 @@ public class Cart
         this._fromCurrency = _fromCurrency;
     }
 }
-

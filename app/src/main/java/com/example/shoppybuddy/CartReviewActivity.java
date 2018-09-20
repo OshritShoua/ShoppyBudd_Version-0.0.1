@@ -2,32 +2,29 @@ package com.example.shoppybuddy;
 
 import android.Manifest;
 import android.arch.persistence.room.Room;
-import android.content.ClipData;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
-import android.view.ContextMenu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -43,10 +40,10 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.prefs.Preferences;
+import java.util.Locale;
 
 public class CartReviewActivity extends AppCompatActivity implements RecaptureImageDialogFragment.RecaptureImageDialogListener, DescriptionDialogFragment.DescriptionDialogListener,
-        PriceSelectionDialogFragment.PriceSelectionDialogListener, CurrencyConflictDialogFragment.CurrencyConflictDialogListener, CurrencySelectionDialogFragment.CurrencySelectionDialogListerner
+        PriceSelectionDialogFragment.PriceSelectionDialogListener, CurrencyConflictDialogFragment.CurrencyConflictDialogListener, CurrencySelectionDialogFragment.CurrencySelectionDialogListener, AdapterView.OnItemClickListener
 {
     private static final int REQUEST_IMAGE_CAPTURE = 10;
     private static final int REQUEST_WRITE_PERMISSION = 20;
@@ -59,14 +56,75 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
     private Cart _cart;
     private double _originalAmount;
     private double _convertedAmount;
-    private AppDataBase _db;
+    private static AppDataBase _db;
     private Uri capturedImageUri;
     private TextView scanResults;
     private Character _scannedSourceCurrency;
+    private int _itemIdPendingDiscount;
+    private boolean _activityInCreationProcess;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        _activityInCreationProcess = true;
+        setContentView(R.layout.activity_cart_review);
+        //scanResults = findViewById(R.id.scanResults);
+        if (savedInstanceState != null) {
+            capturedImageUri = Uri.parse(savedInstanceState.getString(SAVED_INSTANCE_URI));
+            //scanResults.setText(savedInstanceState.getString(SAVED_INSTANCE_RESULT));
+        }
+
+        initComponents(getIntent().getStringExtra("calling activity"));
+    }
+
+    private void initComponents(String callingActivity)
+    {
+        ImageButton captureImageButton = findViewById(R.id.cameraButton);
+        captureImageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ActivityCompat.requestPermissions(CartReviewActivity.this, new
+                        String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA}, REQUEST_WRITE_PERMISSION);
+            }
+        });
+        _cart = new Cart(SettingsPrefActivity.get_preferredSourceCurrencySymbol(),SettingsPrefActivity.get_preferredTargetCurrencySymbol());
+        _db = Room.databaseBuilder(getApplicationContext(), AppDataBase.class, "userShoppings").fallbackToDestructiveMigration().allowMainThreadQueries().build();
+        if(callingActivity.equals(MainActivity.class.getSimpleName()))
+        {
+            if(SettingsPrefActivity.ShouldRequestCartDescription())
+            {
+                DescriptionDialogFragment cartDescriptionDialogFragment = DescriptionDialogFragment.newInstance("", DescriptionDialogFragment.DialogPurpose.cartDescription);
+                cartDescriptionDialogFragment.show(getSupportFragmentManager(), "GetDescription");
+            }
+            else
+                OnCartDescriptionDone(null);
+        }
+        else
+        {
+            int id = getIntent().getIntExtra("cart id", -1);
+            _cart = _db.cartDao().getCartById(id);
+            _cart.GetItems().addAll(_db.itemDao().getItemsByCartId(id));
+            UpdateCurrenciesIfNeeded();
+        }
+
+        registerForContextMenu(findViewById(R.id._dynamic_item_list));
+        _pricingServices = new PricingServices();
+        _ocrServices = new OCRServices();
+    }
+
+    public static AppDataBase GetAppDb(){return _db;}
 
     @Override
     protected void onResume()
     {
+        if(!_activityInCreationProcess)
+        {
+            _cart = _db.cartDao().getCartById(_cart.getId());   //cart may have changed from other activity
+            _cart.GetItems().clear();
+            _cart.GetItems().addAll(_db.itemDao().getItemsByCartId(_cart.getId()));
+        }
+
+        _activityInCreationProcess = false;
         super.onResume();
         UpdateCurrenciesIfNeeded();
         UpdateUI();
@@ -103,80 +161,27 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
             symbolButton.setText(R.string.CurrencyNotSelectedString);
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_cart_review);
-        //scanResults = findViewById(R.id.scanResults);
-        if (savedInstanceState != null) {
-            capturedImageUri = Uri.parse(savedInstanceState.getString(SAVED_INSTANCE_URI));
-            //scanResults.setText(savedInstanceState.getString(SAVED_INSTANCE_RESULT));
-        }
-
-        initComponents(getIntent().getStringExtra("calling activity"));
-    }
-
-    private void initComponents(String callingActivity)
+    private void addDiscount(long id)
     {
-        ImageButton captureImageButton = findViewById(R.id.cameraButton);
-        captureImageButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                ActivityCompat.requestPermissions(CartReviewActivity.this, new
-                        String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA}, REQUEST_WRITE_PERMISSION);
-            }
-        });
-        _cart = new Cart(SettingsPrefActivity.get_preferredSourceCurrencySymbol(),SettingsPrefActivity.get_preferredTargetCurrencySymbol());
-        _db = Room.databaseBuilder(getApplicationContext(), AppDataBase.class, "userShoppings").fallbackToDestructiveMigration().allowMainThreadQueries().build();
-        if(callingActivity.equals(MainActivity.class.getSimpleName()))
-        {
-            if(SettingsPrefActivity.ShouldRequestCartDescription())
-            {
-                DescriptionDialogFragment cartDescriptionDialogFragment = DescriptionDialogFragment.newInstance("moo", DescriptionDialogFragment.DialogPurpose.cartDescription);
-                cartDescriptionDialogFragment.show(getSupportFragmentManager(), "GetDescription");
-            }
-            else
-                OnCartDescriptionDone(null);
-        }
-        else
-        {
-            int id = getIntent().getIntExtra("cart id", -1);
-            _cart = _db.cartDao().getCartById(id);
-            _cart.GetItems().addAll(_db.itemDao().getItemsByCartId(id));
-            UpdateCurrenciesIfNeeded();
-        }
-
-        registerForContextMenu(findViewById(R.id._dynamic_item_list));
-        _pricingServices = new PricingServices();
-        _ocrServices = new OCRServices();
+        _itemIdPendingDiscount = (int)id;
+        Item item = _cart.GetItems().get(_itemIdPendingDiscount);
+        DescriptionDialogFragment descriptionDialogFragment = DescriptionDialogFragment.newInstance(item.GetDiscountFormattedString(), DescriptionDialogFragment.DialogPurpose.itemDiscount );
+        descriptionDialogFragment.show(getSupportFragmentManager(), "getDiscount");
     }
 
     @Override
-    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo)
+    public void OnItemDiscountDone(String discountStr, boolean isDiscountInPercents)
     {
-        super.onCreateContextMenu(menu, v, menuInfo);
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.item_selection_menu, menu );
-    }
-
-    @Override
-    public boolean onContextItemSelected(MenuItem item) {
-        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-        switch (item.getItemId()) {
-            case R.id.add_discount:
-                addDiscount(info.id, item.getActionView());
-                return true;
-            case R.id.delete_item:
-                deleteItem(info.id);
-                return true;
-            default:
-                return super.onContextItemSelected(item);
-        }
-    }
-
-    private void addDiscount(long id, View view)
-    {
-
+        Double discount = Double.parseDouble(discountStr);
+        Item item = _cart.GetItems().get(_itemIdPendingDiscount);
+        double prevAfterDiscountPrice = item.getAfterDiscountPrice();
+        double prevConvertedPrice = item.getConvertedPrice();
+        item.setDiscount(discount, isDiscountInPercents);
+        _cart.set_totalDestCost(_cart.get_totalDestCost() - prevConvertedPrice + item.getConvertedPrice());
+        _cart.set_totalSrcCost(_cart.get_totalSrcCost() - prevAfterDiscountPrice + item.getAfterDiscountPrice());
+        _db.itemDao().updateItem(item);
+        _db.cartDao().updateCart(_cart);
+        RefreshPricingUIDetails();
     }
 
     private void deleteItem(long id)
@@ -184,7 +189,8 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
         ListView items = findViewById(R.id._dynamic_item_list);
         Item item = (Item)items.getAdapter().getItem((int)id);
         _cart.GetItems().remove((int)id);
-        _cart.set_totalCost(_cart.get_totalCost() - item.getConvertedPrice());
+        _cart.set_totalDestCost(_cart.get_totalDestCost() - item.getConvertedPrice());
+        _cart.set_totalSrcCost(_cart.get_totalSrcCost() - item.getAfterDiscountPrice());
         _db.itemDao().delete(item);
         _db.cartDao().updateCart(_cart);
         RefreshPricingUIDetails();
@@ -194,35 +200,92 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
     {
         ArrayAdapter<Item> adapter = new ArrayAdapter<Item>(this, android.R.layout.simple_list_item_1, _cart.GetItems())
         {
+            @NonNull
             @Override
             public View getView(int position, View convertView, ViewGroup parent)
             {
                 View view = super.getView(position, convertView, parent);
-                if(position % 2 == 0)
-                    view.setBackgroundColor(Color.parseColor("#ff99ff"));
+                if(position % 3 == 0)
+                    view.setBackgroundColor(Color.parseColor("#efedf5"));
+                else if(position % 3 == 1)
+                    view.setBackgroundColor(Color.parseColor("#bcbddc"));
                 else
-                    view.setBackgroundColor(Color.parseColor("#ff9999"));
+                    view.setBackgroundColor(Color.parseColor("#756bb1"));
 
                 return view;
             }
         };
         ListView itemListView = findViewById(R.id._dynamic_item_list);
         itemListView.setAdapter(adapter);
+        itemListView.setOnItemClickListener(this);
+        itemListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener()
+        {
+            @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+            @Override
+            public boolean onItemLongClick(AdapterView<?> adapterView, View view, int i, long l)
+            {
+                showMenu(view, i);
+                return true;
+            }
+        });
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l)
+    {
+        Intent intent = new Intent(CartReviewActivity.this, ItemDetailsActivity.class);
+        intent.putExtra("selectedItemIndex", i);
+        intent.putExtra("cart", _cart);
+        startActivity(intent);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+    public void showMenu (View view, final int selectedItem)
+    {
+        PopupMenu menu = new PopupMenu (this, view);
+        menu.setOnMenuItemClickListener (new PopupMenu.OnMenuItemClickListener ()
+        {
+            @Override
+            public boolean onMenuItemClick (MenuItem item)
+            {
+                switch (item.getItemId()) {
+                    case R.id.add_discount:
+                        addDiscount(selectedItem);
+                        return true;
+                    case R.id.delete_item:
+                        deleteItem(selectedItem);
+                        return true;
+                    default:
+                        return true;
+                }
+            }
+        });
+        menu.inflate (R.menu.item_selection_menu);
+        menu.show();
     }
 
     private void UpdateSumUI()
     {
-        TextView totalSumTextView = findViewById(R.id.totalSumText);
-        char currencySymbol = _cart.get_toCurrency();
-        if(currencySymbol != 0)
+        TextView totalDestSumTextView = findViewById(R.id.totalDestSumText);
+        TextView totalSrcSumTextView = findViewById(R.id.totalSrcSumText);
+        char srcCurrency = _cart.get_fromCurrency();
+        char destCurrency = _cart.get_toCurrency();
+        if(srcCurrency != 0)
         {
-            String totalPrice = String.format("%.2f%c", _cart.get_totalCost(), currencySymbol);
-            totalSumTextView.setText(totalPrice);
+            String totalPrice = String.format(Locale.getDefault(),"%.2f%c", _cart.get_totalSrcCost(), srcCurrency);
+            totalSrcSumTextView.setText(totalPrice);
         }
         else
-            totalSumTextView.setText("");
-    }
+            totalSrcSumTextView.setText("");
 
+        if(destCurrency != 0)
+        {
+            String totalPrice = String.format(Locale.getDefault(), "%.2f%c", _cart.get_totalDestCost(), destCurrency);
+            totalDestSumTextView.setText(totalPrice);
+        }
+        else
+            totalDestSumTextView.setText("");
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -242,12 +305,11 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
         RefreshPricingUIDetails();
         _db.itemDao().insertAll(item);
         _db.cartDao().updateCart(_cart);
-
     }
 
     private void RefreshPricingUIDetails()
     {
-        ListView view = (ListView)findViewById(R.id._dynamic_item_list);
+        ListView view = findViewById(R.id._dynamic_item_list);
         ArrayAdapter adapter = (ArrayAdapter<Item>)view.getAdapter();
         adapter.notifyDataSetChanged();
         UpdateSumUI();
@@ -278,10 +340,14 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
 
     @Override
     public void onReturnToCartClick(DialogFragment dialog) {
-        return;
     }
 
-
+    @Override
+    public void OnEnterPriceManuallyRequest()
+    {
+        DescriptionDialogFragment dialog = DescriptionDialogFragment.newInstance("", DescriptionDialogFragment.DialogPurpose.enterPriceManually);
+        dialog.show(getSupportFragmentManager(), "PriceEnter");
+    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item)
@@ -345,7 +411,6 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
         }
         else
         {
-            //todo :  what if couldn't convert
             List<Price> prices = getPricesFromOcrResults(ocrResults.getLeft());
             interactWithUserIfNeededAndDeterminePrice(prices, ocrResults.getRight());
         }
@@ -437,7 +502,7 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
 
     @Override
     public void OnPriceSelected(Price price)
-    {   //todo - not important...but should change this to passing on the price to the dialogs.
+    {
         _pricingServices.ConvertPrices(Arrays.asList(price), price.get_fromCurrencyCode(), _cart.get_toCurrencyCode());
         _originalAmount = price.getOriginalAmount();
         _convertedAmount = price.getConvertedAmount();
@@ -456,7 +521,7 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
     {
         if(SettingsPrefActivity.ShouldRequestItemDescription())
         {
-            DescriptionDialogFragment itemDescriptionDialogFragment = DescriptionDialogFragment.newInstance("moo", DescriptionDialogFragment.DialogPurpose.itemDescription);
+            DescriptionDialogFragment itemDescriptionDialogFragment = DescriptionDialogFragment.newInstance("", DescriptionDialogFragment.DialogPurpose.itemDescription);
             itemDescriptionDialogFragment.show(getSupportFragmentManager(), "GetDescription");
         }
         else
@@ -464,5 +529,11 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
             OnItemDescriptionDone("Item #" + Integer.toString(_cart.GetItems().size() + 1));
         }
     }
-}
 
+    @Override
+    public void OnPriceEnterDone(String price)
+    {
+        double amount = Double.parseDouble(price);
+        OnPriceSelected(new Price(amount, _cart.get_fromCurrency()));
+    }
+}

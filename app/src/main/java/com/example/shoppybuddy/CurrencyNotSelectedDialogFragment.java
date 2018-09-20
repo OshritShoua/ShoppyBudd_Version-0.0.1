@@ -20,14 +20,12 @@ public class CurrencyNotSelectedDialogFragment extends DialogFragment
 
         @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        // Use the Builder class for convenient dialog construction
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setMessage(R.string.select_currencies_dialog_text)
                 .setPositiveButton(R.string.got_it, new DialogInterface.OnClickListener()
                 {
                     public void onClick(DialogInterface dialog, int id)
                     {
-                        return;
                     }
                 })
                 .setNegativeButton(R.string.go_to_settings, new DialogInterface.OnClickListener()
@@ -40,7 +38,6 @@ public class CurrencyNotSelectedDialogFragment extends DialogFragment
                 })
 
                 ;
-        // Create the AlertDialog object and return it
         return builder.create();
     }
 

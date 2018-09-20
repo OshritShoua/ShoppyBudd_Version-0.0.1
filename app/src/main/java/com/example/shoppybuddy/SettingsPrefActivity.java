@@ -10,7 +10,6 @@ import android.view.MenuItem;
 import com.example.shoppybuddy.services.OCRServices;
 
 public class SettingsPrefActivity extends AppCompatPreferenceActivity {
-    private static final String TAG = SettingsPrefActivity.class.getSimpleName();
     private static boolean _shouldRequestItemDescription;
     private static boolean _shouldRequestCartDescription;
     private static String _preferredSourceCurrencyCode = "";
@@ -23,16 +22,6 @@ public class SettingsPrefActivity extends AppCompatPreferenceActivity {
     public static boolean ShouldRequestItemDescription()
     {
         return _shouldRequestItemDescription;
-    }
-
-    public static String get_preferredSourceCurrencyCode()
-    {
-        return _preferredSourceCurrencyCode;
-    }
-
-    public static String get_preferredTargetCurrencyCode()
-    {
-        return _preferredTargetCurrencyCode;
     }
 
     public static Character get_preferredSourceCurrencySymbol()
@@ -113,10 +102,10 @@ public class SettingsPrefActivity extends AppCompatPreferenceActivity {
         {
             switch (preference.getKey()) {
                 case "key_request_description_for_item":
-                    onItemDescriptionPrefChange(preference, o);
+                    onItemDescriptionPrefChange(o);
                     break;
                 case "key_request_description_for_cart":
-                    onCartDescriptionPrefChange(preference, o);
+                    onCartDescriptionPrefChange(o);
                     break;
                 case "key_source_currency":
                     onSourceCurrencyPrefChange(preference, o );
@@ -129,12 +118,12 @@ public class SettingsPrefActivity extends AppCompatPreferenceActivity {
         }
     };
 
-    private static void onItemDescriptionPrefChange(Preference preference, Object o)
+    private static void onItemDescriptionPrefChange(Object o)
     {
         _shouldRequestItemDescription = (boolean)o;
     }
 
-    private static void onCartDescriptionPrefChange(Preference preference, Object o)
+    private static void onCartDescriptionPrefChange(Object o)
     {
         _shouldRequestCartDescription = (boolean)o;
     }

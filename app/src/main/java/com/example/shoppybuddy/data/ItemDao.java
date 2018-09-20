@@ -27,5 +27,8 @@ public interface ItemDao
 
     @Update
     void updateItems(List<Item> items);
+
+    @Update
+    void updateItem(Item item);
 }
 

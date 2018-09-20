@@ -4,22 +4,20 @@ import android.arch.persistence.room.Room;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-
 import com.example.shoppybuddy.data.AppDataBase;
 import com.example.shoppybuddy.entities.Cart;
-
 import java.util.ArrayList;
 import java.util.List;
 
 public class CartListActivity extends AppCompatActivity
 {
-
     private AppDataBase _db;
     private List<Cart> _carts;
     ArrayAdapter<Cart> adapter;
@@ -30,7 +28,6 @@ public class CartListActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cart_list);
     }
-
 
     @Override
     protected void onResume()
@@ -50,21 +47,22 @@ public class CartListActivity extends AppCompatActivity
         if(adapter == null)
             adapter = new ArrayAdapter<Cart>(this, android.R.layout.simple_list_item_1, _carts)
             {
+                @NonNull
                 @Override
                 public View getView(int position, View convertView, ViewGroup parent)
                 {
                     View view = super.getView(position, convertView, parent);
-                    if(position % 2 == 0)
-                        view.setBackgroundColor(Color.parseColor("#50C878"));
+                    if(position % 3 == 0)
+                        view.setBackgroundColor(Color.parseColor("#deebf7"));
+                    else if(position % 3 == 1)
+                        view.setBackgroundColor(Color.parseColor("#9ecae1"));
                     else
-                        view.setBackgroundColor(Color.parseColor("#c46d2f"));
-
+                        view.setBackgroundColor(Color.parseColor("#3182bd"));
                     return view;
                 }
             };
         final ListView cartListView = findViewById(R.id._dynamic_cart_list);
         cartListView.setAdapter(adapter);
-        int x = cartListView.getWidth();
         cartListView.setOnItemClickListener(new AdapterView.OnItemClickListener()
         {
             @Override

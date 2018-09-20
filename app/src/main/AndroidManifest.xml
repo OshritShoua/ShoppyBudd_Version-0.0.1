@@ -25,7 +25,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".CartReviewActivity"></activity>
+        <activity android:name=".CartReviewActivity" />
         <activity
             android:name=".CartListActivity"
             android:label="@string/title_activity_cart_list"
@@ -34,7 +34,8 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.shoppybuddy.MainActivity" />
         </activity>
-        <activity android:name=".SettingsPrefActivity"></activity>
+        <activity android:name=".SettingsPrefActivity" />
+
         <provider
             android:name="android.support.v4.content.FileProvider"
             android:authorities="${applicationId}.provider"
@@ -42,8 +43,11 @@
             android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/provider_paths"/>
+                android:resource="@xml/provider_paths" />
         </provider>
+
+        <activity android:name=".ItemDetailsActivity" />
+        <activity android:name=".FullScreenImageActivity"></activity>
     </application>
 
 </manifest>

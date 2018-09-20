@@ -12,17 +12,17 @@ import android.support.v4.app.DialogFragment;
 
 public class CurrencySelectionDialogFragment extends DialogFragment
 {
-    interface CurrencySelectionDialogListerner
+    interface CurrencySelectionDialogListener
     {
         void OnCurrencySelected(Character currencySymbol);
     }
+
     private CharSequence[] mEntries;
     private CharSequence[] mEntryValues;
     private String mValue;
-    private boolean mValueSet;
     SharedPreferences prefs;
     private int mClickedDialogEntryIndex;
-    private CurrencySelectionDialogListerner mListener;
+    private CurrencySelectionDialogListener mListener;
 
     @Override public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,7 +56,6 @@ public class CurrencySelectionDialogFragment extends DialogFragment
     }
 
     DialogInterface.OnClickListener selectItemListener = new DialogInterface.OnClickListener() {
-
         @Override public void onClick(DialogInterface dialog, int which) {
             if (mClickedDialogEntryIndex != which) {
                 mClickedDialogEntryIndex = which;
@@ -71,10 +70,8 @@ public class CurrencySelectionDialogFragment extends DialogFragment
     public void onAttach(Context activity) {
         super.onAttach(activity);
         try {
-            // Instantiate the NoticeDialogListener so we can send events to the host
-            mListener = (CurrencySelectionDialogListerner) activity;
+            mListener = (CurrencySelectionDialogListener) activity;
         } catch (ClassCastException e) {
-            // The activity doesn't implement the interface, throw exception
             throw new ClassCastException(activity.toString()
                     + " must implement NoticeDialogListener");
         }

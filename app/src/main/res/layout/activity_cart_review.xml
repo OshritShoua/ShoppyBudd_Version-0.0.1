@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorBezh"
+    android:background="@drawable/shopping_background_2_v3"
     tools:context=".CartReviewActivity">
 
     <ListView
@@ -13,7 +13,7 @@
         android:layout_height="0dp"
         android:layout_marginBottom="8dp"
         android:layout_marginTop="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/FromButton"
+        app:layout_constraintBottom_toTopOf="@+id/constraintLayout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
@@ -24,6 +24,7 @@
         android:layout_width="81dp"
         android:layout_height="56dp"
         android:layout_marginBottom="16dp"
+        android:background="@color/colorAccent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -38,9 +39,11 @@
         android:layout_marginRight="24dp"
         android:layout_marginStart="24dp"
         android:layout_marginTop="16dp"
+        android:background="#bcbddc"
         android:text="The Cart name will be here"
+        android:textAlignment="center"
         android:textAllCaps="false"
-        android:textColor="@android:color/holo_red_light"
+        android:textColor="@color/common_google_signin_btn_text_dark_focused"
         android:textColorHighlight="@android:color/holo_blue_dark"
         android:textSize="24sp"
         android:textStyle="bold"
@@ -48,45 +51,71 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/totalSumText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:layout_marginRight="8dp"
-        android:textColor="#c46d2f"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        app:layout_constraintBaseline_toBaselineOf="@+id/sumTitleText"
-        app:layout_constraintEnd_toEndOf="parent"
-        tools:text="Sum holder" />
 
-    <TextView
-        android:id="@+id/sumTitleText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/constraintLayout"
+        android:layout_width="0dp"
+        android:layout_height="83dp"
         android:layout_marginBottom="8dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginStart="8dp"
-        android:text="Total"
-        android:textColor="#c46d2f"
-        android:textSize="24sp"
-        android:textStyle="bold"
+        android:background="#bcbddc"
         app:layout_constraintBottom_toTopOf="@+id/cameraButton"
-        app:layout_constraintStart_toStartOf="@+id/FromButton"
-        app:layout_constraintTop_toTopOf="@+id/totalSumText" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent">
 
-    <Button
-        android:id="@+id/FromButton"
-        android:layout_width="wrap_content"
-        android:layout_height="38dp"
-        android:layout_marginBottom="8dp"
-        android:layout_marginLeft="16dp"
-        android:layout_marginStart="16dp"
-        android:onClick="OnChangeSourceCurrenciesClick"
-        android:text="From: "
-        android:textSize="12sp"
-        app:layout_constraintBottom_toTopOf="@+id/sumTitleText"
-        app:layout_constraintStart_toStartOf="parent" />
+        <Button
+            android:id="@+id/FromButton"
+            android:layout_width="wrap_content"
+            android:layout_height="38dp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginStart="16dp"
+            android:onClick="OnChangeSourceCurrenciesClick"
+            android:text="From: "
+            android:textSize="16sp"
+            app:layout_constraintBaseline_toBaselineOf="@+id/totalSrcSumText"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <TextView
+            android:id="@+id/totalDestSumText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginRight="8dp"
+            android:textColor="#756bb1"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            app:layout_constraintBaseline_toBaselineOf="@+id/sumTitleText"
+            app:layout_constraintEnd_toEndOf="parent"
+            tools:text="Sum holder" />
+
+        <TextView
+            android:id="@+id/totalSrcSumText"
+            android:layout_width="wrap_content"
+            android:layout_height="37dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginRight="8dp"
+            android:textColor="#756bb1"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="@+id/totalDestSumText"
+            app:layout_constraintEnd_toEndOf="parent"
+            tools:text="Sum holder" />
+
+        <TextView
+            android:id="@+id/sumTitleText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:layout_marginLeft="8dp"
+            android:layout_marginStart="8dp"
+            android:text="Total"
+            android:textColor="#756bb1"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/FromButton"
+            app:layout_constraintTop_toTopOf="@+id/totalDestSumText" />
+
+    </android.support.constraint.ConstraintLayout>
 
 </android.support.constraint.ConstraintLayout>

@@ -20,9 +20,6 @@ public interface CartDao
     Cart getCartById(int id);
 
     @Insert
-    void insertAll(Cart... carts);
-
-    @Insert
     long insert(Cart cart);
 
     @Delete
