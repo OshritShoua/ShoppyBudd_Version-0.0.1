@@ -320,7 +320,7 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
     {
         _cart.setId((int)(_db.cartDao().insert(_cart)));
         if(description == null)
-            description = "My shopping cart #" + Integer.toString(_cart.getId() + 1);
+            description = "My shopping cart #" + Integer.toString(_cart.getId());
 
         _cart.set_description(description);
         UpdateCartNameTextView();
