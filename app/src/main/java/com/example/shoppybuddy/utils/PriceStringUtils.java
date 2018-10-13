@@ -7,20 +7,22 @@ public class PriceStringUtils {
 
     public static boolean foundPriceInText(String filteredText)
     {
+        Double price = 0.0;
         boolean priceWasFound = false;
         boolean isNormalPrice = false;
 
         try {
-            Double.parseDouble(filteredText);
+            price = Double.parseDouble(filteredText);
             priceWasFound = true;
         } catch (NumberFormatException e)
         {
             //If we got here, price wasn't found in filtered text
+            return priceWasFound;
         }
 
         isNormalPrice = filteredText.contains(".") ? filteredText.length() <= MAX_DOUBLE_SIZE : filteredText.length() <= MAX_NUMBER_SIZE;
 
-        return priceWasFound && isNormalPrice && filteredText.charAt(0) != '0';
+        return priceWasFound && price > 0 && isNormalPrice && filteredText.charAt(0) != '0';
     }
 
     public static boolean foundDoublePriceInText(String filteredText)
