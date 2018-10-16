@@ -4,16 +4,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/shopping_background_2_v3"
+    android:background="@drawable/shopping_background_2_v2"
     tools:context=".CartReviewActivity">
 
     <ListView
         android:id="@+id/_dynamic_item_list"
         android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginBottom="8dp"
+        android:layout_height="318dp"
         android:layout_marginTop="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/constraintLayout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
@@ -23,7 +21,7 @@
         android:id="@+id/cameraButton"
         android:layout_width="81dp"
         android:layout_height="56dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="8dp"
         android:background="@color/colorAccent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -38,7 +36,7 @@
         android:layout_marginLeft="24dp"
         android:layout_marginRight="24dp"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:background="#bcbddc"
         android:text="The Cart name will be here"
         android:textAlignment="center"
@@ -51,11 +49,25 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <Button
+        android:id="@+id/FromButton"
+        android:layout_width="40dp"
+        android:layout_height="39dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:onClick="OnChangeSourceCurrenciesClick"
+        android:text="$"
+        android:textAlignment="center"
+        android:textAllCaps="false"
+        android:textSize="15sp"
+        app:layout_constraintBottom_toTopOf="@+id/constraintLayout"
+        app:layout_constraintEnd_toEndOf="parent" />
+
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/constraintLayout"
         android:layout_width="0dp"
-        android:layout_height="83dp"
+        android:layout_height="63dp"
         android:layout_marginBottom="8dp"
         android:background="#bcbddc"
         app:layout_constraintBottom_toTopOf="@+id/cameraButton"
@@ -63,17 +75,6 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent">
 
-        <Button
-            android:id="@+id/FromButton"
-            android:layout_width="wrap_content"
-            android:layout_height="38dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginStart="16dp"
-            android:onClick="OnChangeSourceCurrenciesClick"
-            android:text="From: "
-            android:textSize="16sp"
-            app:layout_constraintBaseline_toBaselineOf="@+id/totalSrcSumText"
-            app:layout_constraintStart_toStartOf="parent" />
 
         <TextView
             android:id="@+id/totalDestSumText"
@@ -82,40 +83,56 @@
             android:layout_marginEnd="8dp"
             android:layout_marginRight="8dp"
             android:textColor="#756bb1"
-            android:textSize="24sp"
+            android:textSize="20sp"
             android:textStyle="bold"
-            app:layout_constraintBaseline_toBaselineOf="@+id/sumTitleText"
+            app:layout_constraintBaseline_toBaselineOf="@+id/totalSrcSumText"
             app:layout_constraintEnd_toEndOf="parent"
             tools:text="Sum holder" />
 
         <TextView
             android:id="@+id/totalSrcSumText"
             android:layout_width="wrap_content"
-            android:layout_height="37dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginRight="8dp"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="4dp"
+            android:layout_marginLeft="8dp"
+            android:layout_marginStart="8dp"
             android:textColor="#756bb1"
-            android:textSize="24sp"
+            android:textSize="20sp"
             android:textStyle="bold"
-            app:layout_constraintBottom_toTopOf="@+id/totalDestSumText"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             tools:text="Sum holder" />
 
         <TextView
             android:id="@+id/sumTitleText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:layout_marginLeft="8dp"
-            android:layout_marginStart="8dp"
-            android:text="Total"
+            android:layout_marginTop="4dp"
+            android:text="@string/total_text"
             android:textColor="#756bb1"
-            android:textSize="24sp"
+            android:textSize="20sp"
             android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="@+id/FromButton"
-            app:layout_constraintTop_toTopOf="@+id/totalDestSumText" />
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
     </android.support.constraint.ConstraintLayout>
 
+    <TextView
+        android:id="@+id/textView9"
+        style="@style/Widget.AppCompat.Button"
+        android:layout_width="0dp"
+        android:layout_height="39dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginStart="8dp"
+        android:clickable="false"
+        android:text="@string/SelectedCurrencyButton"
+        android:textAllCaps="false"
+        android:textSize="15sp"
+        app:layout_constraintBottom_toTopOf="@+id/constraintLayout"
+        app:layout_constraintEnd_toStartOf="@+id/FromButton"
+        app:layout_constraintStart_toStartOf="parent" />
 </android.support.constraint.ConstraintLayout>

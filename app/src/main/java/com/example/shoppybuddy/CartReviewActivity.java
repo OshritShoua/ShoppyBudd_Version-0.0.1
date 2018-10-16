@@ -156,7 +156,7 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
         char symbol = _cart.get_fromCurrency();
         Button symbolButton = findViewById(R.id.FromButton);
         if(symbol != 0)
-            symbolButton.setText(getString(R.string.FromButtonText, Character.toString(symbol)));
+            symbolButton.setText(Character.toString(symbol));
         else
             symbolButton.setText(R.string.CurrencyNotSelectedString);
     }
@@ -336,10 +336,6 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
     @Override
     public void onRetakeImageClick(DialogFragment dialog) {
        takePicture();
-    }
-
-    @Override
-    public void onReturnToCartClick(DialogFragment dialog) {
     }
 
     @Override
