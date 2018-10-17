@@ -41,7 +41,7 @@
     <string name="price_selection_text">We found more than one price in the photo, please select the right one. If it\'s not there, you can try again</string>
     <string name="CurrencyConflictDialogText">You\'re trying to enter a price in %s but the cart\'s currency is %s.\nWould you like to change all existing items to %s?</string>
     <string name="Change_currencies_button_text">Change currencies</string>
-    <string name="FromButtonText">From: %s</string>
+    <string name="SelectedCurrencyButton">Selected Source Currency:</string>
     <string name="CurrencyNotSelectedString">Currency not selected</string>
     <string name="CurrencySelection">Please select the source currency for this cart</string>
     <string name="action_item_title">action item title</string>
@@ -60,4 +60,5 @@
     <string name="none_text">None</string>
     <string name="price_entering_description">Please enter the price of your item</string>
     <string name="enter_price_button_text">Let me enter a price</string>
+    <string name="total_text"><u>Total Payment</u></string>
 </resources>

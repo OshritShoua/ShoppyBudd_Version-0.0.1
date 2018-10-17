@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/shopping_background_2_v3"
+    android:background="@drawable/shopping_background_2_v2"
     tools:context=".CartListActivity">
 
     <ListView
@@ -30,10 +30,10 @@
         android:layout_marginTop="16dp"
         android:background="#9ecae1"
         android:text="Pick a cart to continue shopping!"
+        android:textAlignment="center"
         android:textColor="@android:color/background_dark"
         android:textSize="24sp"
         android:textStyle="normal|bold"
-        android:textAlignment="center"
         app:layout_constraintBottom_toTopOf="@+id/_dynamic_cart_list"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

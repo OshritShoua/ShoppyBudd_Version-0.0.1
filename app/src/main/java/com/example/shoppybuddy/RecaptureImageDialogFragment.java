@@ -15,7 +15,7 @@ public class RecaptureImageDialogFragment extends DialogFragment
 {
     public interface RecaptureImageDialogListener{
          void onRetakeImageClick(DialogFragment dialog);
-         void onReturnToCartClick(DialogFragment dialog);
+         void OnEnterPriceManuallyRequest();
     }
 
     RecaptureImageDialogListener mListener;
@@ -43,11 +43,11 @@ public class RecaptureImageDialogFragment extends DialogFragment
                         mListener.onRetakeImageClick(RecaptureImageDialogFragment.this);
                     }
                 })
-                .setNegativeButton(R.string.retake_image_dialog_return_button_text, new DialogInterface.OnClickListener()
+                .setNegativeButton(R.string.enter_price_button_text, new DialogInterface.OnClickListener()
                 {
                     public void onClick(DialogInterface dialog, int id)
                     {
-                        mListener.onReturnToCartClick(RecaptureImageDialogFragment.this);
+                        mListener.OnEnterPriceManuallyRequest();
                     }
                 });
         return builder.create();
