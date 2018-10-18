@@ -10,6 +10,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
@@ -158,7 +159,7 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
         if(symbol != 0)
             symbolButton.setText(Character.toString(symbol));
         else
-            symbolButton.setText(R.string.CurrencyNotSelectedString);
+            symbolButton.setText("?");
     }
 
     private void addDiscount(long id)
