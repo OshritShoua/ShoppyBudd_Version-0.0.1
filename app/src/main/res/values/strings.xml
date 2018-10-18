@@ -61,4 +61,5 @@
     <string name="price_entering_description">Please enter the price of your item</string>
     <string name="enter_price_button_text">Let me enter a price</string>
     <string name="total_text"><u>Total Payment</u></string>
+    <string name="not_available">N/A</string>
 </resources>
