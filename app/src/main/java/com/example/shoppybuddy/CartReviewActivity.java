@@ -118,6 +118,8 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
     @Override
     protected void onResume()
     {
+        super.onResume();
+
         if(!_activityInCreationProcess)
         {
             _cart = _db.cartDao().getCartById(_cart.getId());   //cart may have changed from other activity
@@ -126,7 +128,6 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
         }
 
         _activityInCreationProcess = false;
-        super.onResume();
         UpdateCurrenciesIfNeeded();
         UpdateUI();
     }
@@ -302,9 +303,10 @@ public class CartReviewActivity extends AppCompatActivity implements RecaptureIm
     {
         Item item = new Item(_originalAmount, _convertedAmount, description, _cart.getId(),
                 _scannedSourceCurrency, _cart.get_toCurrency());
+        long item_PK = _db.itemDao().insert(item);
+        item.set_id((int)item_PK);
         _cart.AddItem(item);
         RefreshPricingUIDetails();
-        _db.itemDao().insertAll(item);
         _db.cartDao().updateCart(_cart);
     }
 
