@@ -20,7 +20,7 @@ public interface ItemDao
     List<Item> getItemsByCartId(int id);
 
     @Insert
-    void insertAll(Item... items);
+    long insert(Item cart);
 
     @Delete
     void delete(Item item);

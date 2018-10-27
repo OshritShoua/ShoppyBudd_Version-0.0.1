@@ -77,11 +77,7 @@ public class ItemDetailsActivity extends AppCompatActivity implements TextView.O
         _originalPrice.setText(_item.GetOriginalPriceFormattedString());
         _originalPriceCurrency.setText(Character.toString(_item.get_fromCurrency()));
         _discountCurrency.setText(Character.toString(_item.get_fromCurrency()));
-        if(_item.getDiscount() != 0)
-            _discount.setText(_item.GetDiscountFormattedString());
-
-        _afterDiscountPrice.setText(_item.GetAfterDiscountPriceFormattedString());
-        _convertedPrice.setText(_item.GetConvertedPriceFormattedString());
+        updatePricingUI();
         File photo = new File(Environment.getExternalStorageDirectory(), String.format(Locale.getDefault(), "cid_%d_%s.jpg", _cart.getId(), _item.get_description()));
         _capturedImageUri =FileProvider.getUriForFile(ItemDetailsActivity.this,
                 BuildConfig.APPLICATION_ID + ".provider", photo);
@@ -118,8 +114,7 @@ public class ItemDetailsActivity extends AppCompatActivity implements TextView.O
         _cart.set_totalDestCost(_cart.get_totalDestCost() - prevConverted + _item.getConvertedPrice());
         _db.itemDao().updateItem(_item);
         _db.cartDao().updateCart(_cart);
-        _afterDiscountPrice.setText(_item.GetAfterDiscountPriceFormattedString());
-        _convertedPrice.setText(_item.GetConvertedPriceFormattedString());
+        updatePricingUI();
     }
 
     private void OnDescriptionEdited(TextView description)
@@ -160,8 +155,14 @@ public class ItemDetailsActivity extends AppCompatActivity implements TextView.O
         _cart.set_totalDestCost(_cart.get_totalDestCost() - prevConvertedPrice + _item.getConvertedPrice());
         _db.itemDao().updateItem(_item);
         _db.cartDao().updateCart(_cart);
+        updatePricingUI();
+    }
+
+    private void updatePricingUI()
+    {
         _afterDiscountPrice.setText(_item.GetAfterDiscountPriceFormattedString());
-        _discount.setText(_item.GetDiscountFormattedString());
+        if(_item.getDiscount() != 0)
+            _discount.setText(_item.GetDiscountFormattedString());
         _convertedPrice.setText(_item.GetConvertedPriceFormattedString());
     }
 

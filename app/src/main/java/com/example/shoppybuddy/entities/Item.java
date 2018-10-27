@@ -27,6 +27,8 @@ public class Item implements Serializable
     private char _toCurrency;
     @ColumnInfo(name = "discount")
     private double _discount;
+    @ColumnInfo(name = "is discount in percents")
+    private boolean _isDiscountInPercents;
     @ColumnInfo(name = "dest to src ratio")
     private double _destToSourceRatio;
 
@@ -141,11 +143,27 @@ public class Item implements Serializable
         return _discount;
     }
 
+    public boolean getIsDiscountInPercents(){return _isDiscountInPercents;}
+
+    public void setIsDiscountInPercents(boolean isInPercents){_isDiscountInPercents = isInPercents;}
+
     public String GetDiscountFormattedString()
     {
         if(_discount == 0)
             return null;
-        return String.format(Locale.getDefault(), "%.2f%c / %.2f%%", _discount, _fromCurrency, 100 * (_discount / _originalPrice));
+
+        double discountAmount, discountPercents;
+        if(_isDiscountInPercents)
+        {
+            discountPercents = _discount;
+            discountAmount = (discountPercents / 100) * _originalPrice;
+        }
+        else
+        {
+            discountAmount = _discount;
+            discountPercents = (_discount / _originalPrice) * 100;
+        }
+        return String.format(Locale.getDefault(), "%.2f%c | %.2f%%", discountAmount, _fromCurrency, discountPercents);
     }
 
     public void setOriginalPrice(double price)
@@ -156,7 +174,15 @@ public class Item implements Serializable
 
     private void UpdateDerivedPrices()
     {
-        _afterDiscountPrice = _originalPrice - _discount;
+        double discountAmount;
+        if(_isDiscountInPercents)
+        {
+            discountAmount = (_discount / 100) * _originalPrice;
+        }
+        else
+            discountAmount = _discount;
+
+        _afterDiscountPrice = _originalPrice - discountAmount;
         if(_afterDiscountPrice < 0)
         {
             _afterDiscountPrice = 0;
@@ -168,12 +194,8 @@ public class Item implements Serializable
 
     public void setDiscount(double discount, boolean isDiscountInPercents)
     {
-        if (isDiscountInPercents) {
-            _discount = (discount / 100) * _originalPrice;
-        } else {
-            _discount = discount;
-        }
-
+        _isDiscountInPercents = isDiscountInPercents;
+        _discount = discount;
         UpdateDerivedPrices();
     }
 
